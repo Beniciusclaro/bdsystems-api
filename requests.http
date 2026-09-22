@@ -1,0 +1,28 @@
+@baseUrl = http://localhost:8080/api
+@email = caos@teste.com
+@password = SenhaForte123!
+
+### Cria uma empresa e o respetivo utilizador OWNER
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "companyName": "teste",
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+### Autentica pelo e-mail e senha; o tenant é obtido internamente pelo utilizador.
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+### Rota protegida
+# Copie o token retornado no login para @token.
+@token = SUBSTITUA_PELO_JWT
+GET {{baseUrl}}/
+Authorization: Bearer {{token}}

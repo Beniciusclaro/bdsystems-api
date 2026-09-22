@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: bdsystems-api
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/bdsystems
+    username: postgres
+    password: password
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    open-in-view: false
+    hibernate:
+        ddl-auto: validate
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+security:
+  jwt:
+    secret: ${JWT_SECRET:4G3OwI4gP+8aSljRtN4CIvqpvZSmlwevkLzbaioJ+b4=}
+    issuer: bdsystems-api
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    url: /openapi.yml
+
