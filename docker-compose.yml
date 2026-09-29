@@ -1,7 +1,7 @@
 services:
 
   bdsystems-postgres:
-    image: postgres:latest
+    image: postgres:18
     container_name: bdsystems-postgres
     restart: unless-stopped
     environment:
@@ -9,7 +9,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - /DATA/AppData/bdsystems-postgres:/var/lib/postgresql
+      - postgres_data:/var/lib/postgresql
 
   bdsystems-api:
     image: benicius/bdsystems-api:latest
@@ -23,3 +23,6 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
     depends_on:
       - bdsystems-postgres
+
+volumes:
+  postgres_data:
