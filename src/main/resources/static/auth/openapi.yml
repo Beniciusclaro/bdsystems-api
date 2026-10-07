@@ -1,0 +1,173 @@
+openapi: 3.0.3
+
+info:
+  title: BD Systems API - Authentication
+  version: 1.0.0
+
+paths:
+  /api/auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new user
+      description: Creates a user account for a company.
+      operationId: register
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+      responses:
+        '201':
+          description: User successfully registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Invalid request data
+        '409':
+          description: User or company already exists
+
+  /api/auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Authenticate user
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid credentials
+
+  /api/auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: Logout user
+      operationId: logout
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Logout successful
+        '401':
+          description: Invalid credentials
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@email.com
+        password:
+          type: string
+          format: password
+          example: "123456"
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          example: jwt-token
+
+    UserRequest:
+      type: object
+      required:
+        - name
+        - email
+        - password
+        - company
+        - address
+      properties:
+        name:
+          type: string
+          example: Benicius Alves
+        email:
+          type: string
+          format: email
+          example: benicius@example.com
+        password:
+          type: string
+          format: password
+          example: MyPassword123!
+        role:
+          type: string
+          enum:
+            - USER
+            - ADMIN
+            - MANAGER
+        address:
+          $ref: '#/components/schemas/AddressRequest'
+        company:
+          $ref: '#/components/schemas/CompanyRequest'
+
+    AddressRequest:
+      type: object
+      required:
+        - street
+        - city
+        - state
+        - zipcode
+      properties:
+        street:
+          type: string
+          example: Rua Example, 123
+        city:
+          type: string
+          example: Porto
+        state:
+          type: string
+          example: Porto
+        zipcode:
+          type: string
+          example: 4000-123
+
+    CompanyRequest:
+      type: object
+      required:
+        - name
+        - address
+      properties:
+        name:
+          type: string
+          example: BD Systems
+        id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+        address:
+          $ref: '#/components/schemas/AddressRequest'
+
+    UserResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          example: jwt-token

@@ -1,0 +1,196 @@
+openapi: 3.0.3
+
+info:
+  title: BD Systems API - Employee
+  version: 1.0.0
+
+paths:
+  /api/employees:
+    post:
+      tags:
+        - Employee
+      summary: Register an employee
+      description: Creates an employee linked to the company identified by the authenticated JWT tenant_id claim.
+      operationId: createEmployee
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeRequest'
+            example:
+              fullName: Taylor Employee
+              email: taylor@example.com
+              phoneNumber: "+351900000000"
+              documentNumber: "123456789"
+              birthDate: "1990-01-15"
+              address:
+                street: Second Street
+                city: Lisbon
+                state: Lisbon
+                zipCode: "1000-002"
+              employeeNumber: EMP-001
+              position: Engineer
+              department: Product
+              admissionDate: "2025-01-10"
+              status: ACTIVE
+      responses:
+        '201':
+          description: Employee successfully registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeResponse'
+        '400':
+          description: Invalid request data
+        '401':
+          description: Authentication required
+        '404':
+          description: Company not found
+        '409':
+          description: Employee number already registered for this company
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    EmployeeRequest:
+      type: object
+      required:
+        - fullName
+        - email
+        - phoneNumber
+        - address
+        - employeeNumber
+        - position
+        - department
+        - admissionDate
+        - status
+      properties:
+        fullName:
+          type: string
+          example: Taylor Employee
+        email:
+          type: string
+          format: email
+          example: taylor@example.com
+        phoneNumber:
+          type: string
+          example: "+351900000000"
+        documentNumber:
+          type: string
+          example: "123456789"
+        birthDate:
+          type: string
+          format: date
+          nullable: true
+          example: "1990-01-15"
+        address:
+          $ref: '#/components/schemas/AddressRequest'
+        employeeNumber:
+          type: string
+          example: EMP-001
+        position:
+          type: string
+          example: Engineer
+        department:
+          type: string
+          example: Product
+        admissionDate:
+          type: string
+          format: date
+          example: "2025-01-10"
+        terminationDate:
+          type: string
+          format: date
+          nullable: true
+          example: "2026-01-10"
+        status:
+          type: string
+          enum:
+            - ACTIVE
+            - INACTIVE
+            - TERMINATED
+
+    AddressRequest:
+      type: object
+      required:
+        - street
+        - city
+        - state
+        - zipCode
+      properties:
+        street:
+          type: string
+          example: Second Street
+        city:
+          type: string
+          example: Lisbon
+        state:
+          type: string
+          example: Lisbon
+        zipCode:
+          type: string
+          example: "1000-002"
+
+    EmployeeResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        fullName:
+          type: string
+        email:
+          type: string
+          format: email
+        phoneNumber:
+          type: string
+        documentNumber:
+          type: string
+        birthDate:
+          type: string
+          format: date
+          nullable: true
+        address:
+          $ref: '#/components/schemas/AddressResponse'
+        companyId:
+          type: string
+          format: uuid
+        employeeNumber:
+          type: string
+        position:
+          type: string
+        department:
+          type: string
+        admissionDate:
+          type: string
+          format: date
+        terminationDate:
+          type: string
+          format: date
+          nullable: true
+        status:
+          type: string
+          enum:
+            - ACTIVE
+            - INACTIVE
+            - TERMINATED
+
+    AddressResponse:
+      type: object
+      properties:
+        street:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zipCode:
+          type: string
