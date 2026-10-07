@@ -52,24 +52,29 @@ public class AuthenticationService {
       throw new EmailAlreadyRegisteredException(request.email());
     }
 
-    Company company = companyRepository.findByName(request.company().name())
-        .orElseGet(() -> companyRepository.save(
-            new Company(
-                request.company().name(),
-                addressRepository.save(
-                    new Address(
-                        request.company().address().street(),
-                        request.company().address().city(),
-                        request.company().address().state(),
-                        request.company().address().zipcode()
-                    )
-                ))));
+    var existingCompany = companyRepository.findByName(request.company().name());
+
+    Company company = existingCompany.orElseGet(() -> companyRepository.save(
+        new Company(
+            request.company().name(),
+            addressRepository.save(
+                new Address(
+                    request.company().address().street(),
+                    request.company().address().city(),
+                    request.company().address().state(),
+                    request.company().address().zipcode()
+                )
+            )
+        )
+    ));
+
+    Role role = existingCompany.isPresent() ? Role.USER : Role.ADMIN;
 
     Address savedAddress = addressRepository.save(new Address(
-        request.address().street(),
-        request.address().city(),
-        request.address().state(),
-        request.address().zipcode()
+        request.company().address().street(),
+        request.company().address().city(),
+        request.company().address().state(),
+        request.company().address().zipcode()
     ));
 
     User user = new User(
@@ -77,7 +82,7 @@ public class AuthenticationService {
         request.name(),
         request.email(),
         passwordEncoder.encode(request.password()),
-        request.role() != null ? Role.valueOf(request.role()) : Role.USER,
+        role,
         savedAddress,
         company
     );

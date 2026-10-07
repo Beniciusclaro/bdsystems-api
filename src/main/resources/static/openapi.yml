@@ -121,7 +121,6 @@ components:
         - name
         - email
         - password
-        - role
         - companyName
         - address
       properties:
@@ -139,10 +138,6 @@ components:
           type: string
           format: password
           example: MyPassword123!
-
-        role:
-          type: string
-          example: ADMIN
 
         companyName:
           type: string
