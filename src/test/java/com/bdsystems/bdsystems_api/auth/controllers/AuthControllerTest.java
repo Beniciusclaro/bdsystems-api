@@ -1,5 +1,6 @@
 package com.bdsystems.bdsystems_api.auth.controllers;
 
+import com.bdsystems.bdsystems_api.auth.domains.dtos.UserRequest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -10,7 +11,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -29,29 +29,38 @@ class AuthControllerTest {
     void registersLogsInAndProtectsRoutesByTenant() throws Exception {
         register("Acme", "owner@example.com");
 
-        mockMvc.perform(get("/"))
+        mockMvc.perform(post("/api/auth/logout"))
                 .andExpect(status().isUnauthorized());
 
-        MvcResult loginResult = mockMvc.perform(post("/auth/login")
+        MvcResult loginResult = mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"email":"OWNER@example.com","password":"%s"}
+                                {"email":"owner@example.com","password":"%s"}
                                 """.formatted(PASSWORD)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").isNotEmpty())
                 .andReturn();
 
         String token = objectMapper.readTree(loginResult.getResponse().getContentAsString()).path("token").asText();
-        mockMvc.perform(get("/").header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/auth/logout").header("Authorization", "Bearer " + token))
+                .andExpect(status().isNoContent());
     }
 
     private void register(String companyName, String email) throws Exception {
-        MvcResult result = mockMvc.perform(post("/auth/register")
+        UserRequest request = new UserRequest(
+                "Acme Owner",
+                email,
+                PASSWORD,
+                new UserRequest.CompanyRequest(
+                        companyName,
+                        null,
+                        new UserRequest.AddressRequest("Main Street", "Lisbon", "Lisbon", "1000-001")
+                )
+        );
+
+        MvcResult result = mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"companyName":"%s","email":"%s","password":"%s"}
-                                """.formatted(companyName, email, PASSWORD)))
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.token").isNotEmpty())
                 .andReturn();

@@ -28,7 +28,7 @@ public class UserRegistrationService implements UserDetailsService {
   @Transactional
   public User createUser(UserRequest userRequest) {
 
-    if (userRepository.existsByEmail(userRequest.email())) {
+    /*if (userRepository.existsByEmail(userRequest.email())) {
       throw new EmailAlreadyRegisteredException(userRequest.email());
     }
 
@@ -68,7 +68,8 @@ public class UserRegistrationService implements UserDetailsService {
         company
     );
 
-    return userRepository.save(user);
+    return userRepository.save(user);*/
+    return null; // Placeholder return statement
   }
 
   @Override
