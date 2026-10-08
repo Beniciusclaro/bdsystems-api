@@ -12,8 +12,6 @@ public record UserRequest(
     @Email(message = "E-mail inválido")
     String email,
     @NotBlank String password,
-    String role,
-    AddressRequest address,
     @Valid CompanyRequest company) {
 
   public record AddressRequest(
