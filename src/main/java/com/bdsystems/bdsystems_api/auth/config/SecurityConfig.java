@@ -8,6 +8,7 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -35,7 +36,7 @@ public class SecurityConfig {
 
     http
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-        .csrf(csrf -> csrf.disable())
+        .csrf(AbstractHttpConfigurer::disable)
         .sessionManagement(session ->
             session.sessionCreationPolicy(
                 SessionCreationPolicy.STATELESS
@@ -67,38 +68,36 @@ public class SecurityConfig {
   @Bean
   public AuthenticationManager authenticationManager(
       AuthenticationConfiguration configuration
-  ) throws Exception {
+  ) {
     return configuration.getAuthenticationManager();
   }
 
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(
+
+        configuration.setAllowedOriginPatterns(List.of(
                 "http://localhost:9090",
                 "http://localhost:5173",
                 "http://192.168.1.249:9090"
         ));
-        configuration.setAllowedMethods(
-                List.of(
-                        "GET",
-                        "POST",
-                        "PUT",
-                        "DELETE",
-                        "OPTIONS",
-                        "PATCH"
-                )
-        );
-        configuration.setAllowedHeaders(
-                List.of(
-                        "Content-Type",
-                        "Authorization"
-                )
-        );
+
+        configuration.setAllowedMethods(List.of(
+                "GET",
+                "POST",
+                "PUT",
+                "DELETE",
+                "OPTIONS",
+                "PATCH"
+        ));
+
+        configuration.setAllowedHeaders(List.of("*"));
 
         UrlBasedCorsConfigurationSource source =
                 new UrlBasedCorsConfigurationSource();
+
         source.registerCorsConfiguration("/**", configuration);
+
         return source;
     }
 }
