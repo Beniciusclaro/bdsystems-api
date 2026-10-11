@@ -20,3 +20,10 @@ paths:
     $ref: './auth/openapi.yml#/paths/~1api~1auth~1logout'
   /api/employees:
     $ref: './employee/openapi.yml#/paths/~1api~1employees'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

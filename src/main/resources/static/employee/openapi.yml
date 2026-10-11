@@ -6,6 +6,56 @@ info:
 
 paths:
   /api/employees:
+    get:
+      tags:
+        - Employee
+      summary: List employees
+      description: Returns a paginated list of employees belonging to the company identified by the authenticated JWT tenant_id claim.
+      operationId: findAllEmployees
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Zero-based page number.
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+            minimum: 0
+        - name: size
+          in: query
+          description: Number of employees per page.
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 20
+            minimum: 1
+        - name: sort
+          in: query
+          description: Sort criteria in the format property,direction. May be specified more than once.
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+            example:
+              - fullName,asc
+      responses:
+        '200':
+          description: A page of employees for the authenticated company
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeePage'
+        '401':
+          description: Authentication required
+        '403':
+          description: JWT does not contain a valid tenant_id
     post:
       tags:
         - Employee
@@ -182,6 +232,69 @@ components:
             - ACTIVE
             - INACTIVE
             - TERMINATED
+
+    EmployeePage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmployeeResponse'
+        pageable:
+          $ref: '#/components/schemas/Pageable'
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int32
+        last:
+          type: boolean
+        size:
+          type: integer
+          format: int32
+        number:
+          type: integer
+          format: int32
+          description: Zero-based page number.
+        sort:
+          $ref: '#/components/schemas/Sort'
+        first:
+          type: boolean
+        numberOfElements:
+          type: integer
+          format: int32
+        empty:
+          type: boolean
+
+    Pageable:
+      type: object
+      properties:
+        pageNumber:
+          type: integer
+          format: int32
+        pageSize:
+          type: integer
+          format: int32
+        offset:
+          type: integer
+          format: int64
+        paged:
+          type: boolean
+        unpaged:
+          type: boolean
+        sort:
+          $ref: '#/components/schemas/Sort'
+
+    Sort:
+      type: object
+      properties:
+        sorted:
+          type: boolean
+        unsorted:
+          type: boolean
+        empty:
+          type: boolean
 
     AddressResponse:
       type: object

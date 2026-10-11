@@ -9,6 +9,8 @@ import com.bdsystems.bdsystems_api.employee.domains.dtos.EmployeeResponse;
 import com.bdsystems.bdsystems_api.employee.domains.entities.Employee;
 import com.bdsystems.bdsystems_api.employee.repositories.EmployeeRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -75,6 +77,12 @@ public class EmployeeService {
     );
 
     return toResponse(employeeRepository.save(employee));
+  }
+
+  @Transactional
+  public Page<EmployeeResponse> findAll(UUID companyId, Pageable pageable) {
+    return employeeRepository.findAllByCompanyId(companyId, pageable)
+        .map(this::toResponse);
   }
 
   private EmployeeResponse toResponse(Employee employee) {

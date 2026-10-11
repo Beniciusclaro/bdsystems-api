@@ -50,6 +50,8 @@ public class SecurityConfig {
                 "/swagger-ui/**",
                 "/v3/api-docs/**",
                 "/openapi.yml",
+                "/auth/openapi.yml",
+                "/employee/openapi.yml",
                 "/test"
             )
             .permitAll()
