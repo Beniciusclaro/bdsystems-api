@@ -10,7 +10,7 @@ paths:
       tags:
         - Employee
       summary: List employees
-      description: Returns a paginated list of employees belonging to the company identified by the authenticated JWT tenant_id claim.
+      description: Returns a paginated list of enabled employees for the authenticated company. All filters are optional and can be combined; when multiple filters are supplied, they are combined with AND. Empty position or department values are ignored. Position and department use case-insensitive partial matching.
       operationId: findAllEmployees
       security:
         - bearerAuth: []
@@ -45,6 +45,31 @@ paths:
               type: string
             example:
               - fullName,asc
+        - name: status
+          in: query
+          description: Optional exact employment status filter. Combine with position and/or department using AND.
+          required: false
+          schema:
+            type: string
+            enum:
+              - ACTIVE
+              - INACTIVE
+              - TERMINATED
+              - LEASED
+        - name: position
+          in: query
+          description: Optional case-insensitive partial match for job title. Empty values are ignored. Combine with status and/or department using AND.
+          required: false
+          schema:
+            type: string
+            example: Engineer
+        - name: department
+          in: query
+          description: Optional case-insensitive partial match for department. Empty values are ignored. Combine with status and/or position using AND.
+          required: false
+          schema:
+            type: string
+            example: Product
       responses:
         '200':
           description: A page of employees for the authenticated company
@@ -102,6 +127,31 @@ paths:
         '409':
           description: Employee number already registered for this company
   /api/employees/{id}:
+    delete:
+      tags:
+        - Employee
+      summary: Delete an employee
+      description: Soft deletes the employee by setting its enable flag to true, if it belongs to the company identified by the authenticated JWT tenant_id claim.
+      operationId: deleteEmployee
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Employee UUID.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Employee successfully deleted
+        '401':
+          description: Authentication required
+        '403':
+          description: JWT does not contain a valid tenant_id
+        '404':
+          description: Employee not found for the authenticated company
     put:
       tags:
         - Employee
@@ -304,61 +354,25 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/EmployeeResponse'
-        pageable:
-          $ref: '#/components/schemas/Pageable'
-        totalElements:
-          type: integer
-          format: int64
-        totalPages:
-          type: integer
-          format: int32
-        last:
-          type: boolean
-        size:
-          type: integer
-          format: int32
-        number:
-          type: integer
-          format: int32
-          description: Zero-based page number.
-        sort:
-          $ref: '#/components/schemas/Sort'
-        first:
-          type: boolean
-        numberOfElements:
-          type: integer
-          format: int32
-        empty:
-          type: boolean
-
-    Pageable:
-      type: object
-      properties:
-        pageNumber:
-          type: integer
-          format: int32
-        pageSize:
-          type: integer
-          format: int32
-        offset:
-          type: integer
-          format: int64
-        paged:
-          type: boolean
-        unpaged:
-          type: boolean
-        sort:
-          $ref: '#/components/schemas/Sort'
-
-    Sort:
-      type: object
-      properties:
-        sorted:
-          type: boolean
-        unsorted:
-          type: boolean
-        empty:
-          type: boolean
+        page:
+          type: object
+          properties:
+            size:
+              type: integer
+              format: int32
+              description: Number of elements requested per page.
+            number:
+              type: integer
+              format: int32
+              description: Zero-based page number.
+            totalElements:
+              type: integer
+              format: int64
+              description: Total number of matching employees.
+            totalPages:
+              type: integer
+              format: int32
+              description: Total number of pages.
 
     AddressResponse:
       type: object

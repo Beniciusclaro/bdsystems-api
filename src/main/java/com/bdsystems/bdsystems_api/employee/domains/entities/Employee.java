@@ -34,6 +34,9 @@ public class Employee extends Person {
   @Column(name = "employee_number", nullable = false, length = 100)
   private String employeeNumber;
 
+  @Column(nullable = false)
+  private boolean enable = false;
+
   @Column(nullable = false, length = 150)
   private String position;
 
@@ -103,5 +106,9 @@ public class Employee extends Person {
     this.status = status;
     this.paymentMethod = paymentMethod;
     this.paymentAmount = paymentAmount;
+  }
+
+  public void markAsDeleted() {
+    this.enable = true;
   }
 }

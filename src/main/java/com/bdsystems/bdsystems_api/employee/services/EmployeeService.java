@@ -7,6 +7,7 @@ import com.bdsystems.bdsystems_api.auth.repositories.CompanyRepository;
 import com.bdsystems.bdsystems_api.employee.domains.dtos.EmployeeRequest;
 import com.bdsystems.bdsystems_api.employee.domains.dtos.EmployeeResponse;
 import com.bdsystems.bdsystems_api.employee.domains.entities.Employee;
+import com.bdsystems.bdsystems_api.employee.domains.entities.EmployeeStatus;
 import com.bdsystems.bdsystems_api.employee.repositories.EmployeeRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
@@ -83,7 +84,7 @@ public class EmployeeService {
 
   @Transactional
   public EmployeeResponse update(UUID id, EmployeeRequest request, UUID companyId) {
-    Employee employee = employeeRepository.findByIdAndCompanyId(id, companyId)
+    Employee employee = employeeRepository.findByIdAndCompanyIdAndEnableFalse(id, companyId)
         .orElseThrow(() -> new ResponseStatusException(
             HttpStatus.NOT_FOUND,
             "Employee not found"
@@ -129,9 +130,36 @@ public class EmployeeService {
   }
 
   @Transactional
-  public Page<EmployeeResponse> findAll(UUID companyId, Pageable pageable) {
-    return employeeRepository.findAllByCompanyId(companyId, pageable)
+  public void delete(UUID id, UUID companyId) {
+    Employee employee = employeeRepository.findByIdAndCompanyIdAndEnableFalse(id, companyId)
+        .orElseThrow(() -> new ResponseStatusException(
+            HttpStatus.NOT_FOUND,
+            "Employee not found"
+        ));
+    employee.markAsDeleted();
+    employeeRepository.save(employee);
+  }
+
+  @Transactional
+  public Page<EmployeeResponse> findAll(
+      UUID companyId,
+      Pageable pageable,
+      EmployeeStatus status,
+      String position,
+      String department
+  ) {
+    return employeeRepository.findByFilters(
+            companyId,
+            status,
+            normalizeFilter(position),
+            normalizeFilter(department),
+            pageable
+        )
         .map(this::toResponse);
+  }
+
+  private String normalizeFilter(String value) {
+    return value == null || value.isBlank() ? "" : value.trim();
   }
 
   private EmployeeResponse toResponse(Employee employee) {

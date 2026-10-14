@@ -20,6 +20,8 @@ paths:
     $ref: './auth/openapi.yml#/paths/~1api~1auth~1logout'
   /api/employees:
     $ref: './employee/openapi.yml#/paths/~1api~1employees'
+  /api/employees/{id}:
+    $ref: './employee/openapi.yml#/paths/~1api~1employees~1{id}'
 
 components:
   securitySchemes:

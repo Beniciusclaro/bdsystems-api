@@ -25,9 +25,12 @@ import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -119,10 +122,77 @@ class EmployeeControllerTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.content.length()").value(1))
         .andExpect(jsonPath("$.content[0].companyId").value(company.getId().toString()))
-        .andExpect(jsonPath("$.totalElements").value(2))
-        .andExpect(jsonPath("$.totalPages").value(2))
-        .andExpect(jsonPath("$.number").value(0))
-        .andExpect(jsonPath("$.size").value(1));
+        .andExpect(jsonPath("$.page.totalElements").value(2))
+        .andExpect(jsonPath("$.page.totalPages").value(2))
+        .andExpect(jsonPath("$.page.number").value(0))
+        .andExpect(jsonPath("$.page.size").value(1));
+  }
+
+  @Test
+  void filtersEmployeesByStatusPositionAndDepartmentIndividuallyOrCombined() throws Exception {
+    Company company = createCompany("Employee Filter Company");
+    createEmployee(
+        company,
+        "Alex Filter",
+        "alex.filter@example.com",
+        "EMP-FILTER-1",
+        "Team Lead",
+        "Finance",
+        EmployeeStatus.ACTIVE
+    );
+    createEmployee(
+        company,
+        "Blair Filter",
+        "blair.filter@example.com",
+        "EMP-FILTER-2",
+        "Team Lead",
+        "Operations",
+        EmployeeStatus.INACTIVE
+    );
+    createEmployee(
+        company,
+        "Casey Filter",
+        "casey.filter@example.com",
+        "EMP-FILTER-3",
+        "Analyst",
+        "Finance",
+        EmployeeStatus.ACTIVE
+    );
+    String token = tokenFor(company);
+
+    mockMvc.perform(get("/api/employees")
+            .param("status", "ACTIVE")
+            .header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.page.totalElements").value(2));
+
+    mockMvc.perform(get("/api/employees")
+            .param("position", "lead")
+            .header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.page.totalElements").value(2));
+
+    mockMvc.perform(get("/api/employees")
+            .param("department", "FIN")
+            .header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.page.totalElements").value(2));
+
+    mockMvc.perform(get("/api/employees")
+            .param("status", "ACTIVE")
+            .param("department", "FIN")
+            .header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.page.totalElements").value(2));
+
+    mockMvc.perform(get("/api/employees")
+            .param("status", "ACTIVE")
+            .param("position", "lead")
+            .param("department", "fin")
+            .header("Authorization", "Bearer " + token))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.page.totalElements").value(1))
+        .andExpect(jsonPath("$.content[0].fullName").value("Alex Filter"));
   }
 
   @Test
@@ -204,6 +274,48 @@ class EmployeeControllerTest {
   }
 
   @Test
+  void softDeletesEmployeeForAuthenticatedCompanyAndHidesItFromListing() throws Exception {
+    Company company = createCompany("Employee Delete Company");
+    Employee employee = createEmployee(
+        company,
+        "Taylor To Delete",
+        "delete.taylor@example.com",
+        "EMP-DELETE"
+    );
+
+    mockMvc.perform(delete("/api/employees/{id}", employee.getId())
+            .header("Authorization", "Bearer " + tokenFor(company)))
+        .andExpect(status().isNoContent());
+
+    Employee deletedEmployee = employeeRepository.findById(employee.getId()).orElseThrow();
+    assertTrue(deletedEmployee.isEnable());
+
+    mockMvc.perform(get("/api/employees")
+            .header("Authorization", "Bearer " + tokenFor(company)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content.length()").value(0))
+        .andExpect(jsonPath("$.page.totalElements").value(0));
+  }
+
+  @Test
+  void doesNotDeleteEmployeeOwnedByAnotherCompany() throws Exception {
+    Company ownerCompany = createCompany("Delete Owner Company");
+    Company authenticatedCompany = createCompany("Delete Other Company");
+    Employee employee = createEmployee(
+        ownerCompany,
+        "Tenant Isolated Delete",
+        "tenant.delete@example.com",
+        "EMP-DELETE-TENANT"
+    );
+
+    mockMvc.perform(delete("/api/employees/{id}", employee.getId())
+            .header("Authorization", "Bearer " + tokenFor(authenticatedCompany)))
+        .andExpect(status().isNotFound());
+
+    assertFalse(employeeRepository.findById(employee.getId()).orElseThrow().isEnable());
+  }
+
+  @Test
   void servesOpenApiDocumentsWithoutAuthentication() throws Exception {
     mockMvc.perform(get("/auth/openapi.yml"))
         .andExpect(status().isOk())
@@ -255,6 +367,26 @@ class EmployeeControllerTest {
   }
 
   private Employee createEmployee(Company company, String name, String email, String number) {
+    return createEmployee(
+        company,
+        name,
+        email,
+        number,
+        "Engineer",
+        "Product",
+        EmployeeStatus.ACTIVE
+    );
+  }
+
+  private Employee createEmployee(
+      Company company,
+      String name,
+      String email,
+      String number,
+      String position,
+      String department,
+      EmployeeStatus status
+  ) {
     Address address = addressRepository.save(
         new Address(name + " Street", "Lisbon", "Lisbon", "1000-002")
     );
@@ -267,11 +399,11 @@ class EmployeeControllerTest {
         address,
         company,
         number,
-        "Engineer",
-        "Product",
+        position,
+        department,
         LocalDate.of(2025, 1, 10),
         null,
-        EmployeeStatus.ACTIVE,
+        status,
         PaymentMethod.DAILY,
         new BigDecimal("1000.00")
     ));
