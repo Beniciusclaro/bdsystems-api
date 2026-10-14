@@ -1,11 +1,13 @@
 package com.bdsystems.bdsystems_api.employee.domains.dtos;
 
 import com.bdsystems.bdsystems_api.employee.domains.entities.EmployeeStatus;
+import com.bdsystems.bdsystems_api.employee.domains.entities.PaymentMethod;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record EmployeeRequest(
@@ -20,7 +22,9 @@ public record EmployeeRequest(
     String department,
     LocalDate admissionDate,
     LocalDate terminationDate,
-    EmployeeStatus status
+    EmployeeStatus status,
+    PaymentMethod paymentMethod,
+    BigDecimal paymentAmount
 ) {
 
   public record AddressRequest(

@@ -13,6 +13,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -44,6 +46,15 @@ public class EmployeeController {
       @AuthenticationPrincipal Jwt jwt
   ) {
     return employeeService.findAll(companyIdFrom(jwt), pageable);
+  }
+
+  @PutMapping("/{id}")
+  public EmployeeResponse update(
+      @PathVariable UUID id,
+      @Valid @RequestBody EmployeeRequest request,
+      @AuthenticationPrincipal Jwt jwt
+  ) {
+    return employeeService.update(id, request, companyIdFrom(jwt));
   }
 
   private UUID companyIdFrom(Jwt jwt) {

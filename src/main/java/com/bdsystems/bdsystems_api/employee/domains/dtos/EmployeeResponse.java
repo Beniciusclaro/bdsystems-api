@@ -1,7 +1,9 @@
 package com.bdsystems.bdsystems_api.employee.domains.dtos;
 
 import com.bdsystems.bdsystems_api.employee.domains.entities.EmployeeStatus;
+import com.bdsystems.bdsystems_api.employee.domains.entities.PaymentMethod;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -19,7 +21,9 @@ public record EmployeeResponse(
     String department,
     LocalDate admissionDate,
     LocalDate terminationDate,
-    EmployeeStatus status
+    EmployeeStatus status,
+    PaymentMethod paymentMethod,
+    BigDecimal paymentAmount
 ) {
 
 

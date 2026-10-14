@@ -6,7 +6,10 @@ import com.bdsystems.bdsystems_api.auth.repositories.AddressRepository;
 import com.bdsystems.bdsystems_api.auth.repositories.CompanyRepository;
 import com.bdsystems.bdsystems_api.employee.domains.entities.Employee;
 import com.bdsystems.bdsystems_api.employee.domains.entities.EmployeeStatus;
+import com.bdsystems.bdsystems_api.employee.domains.entities.PaymentMethod;
 import com.bdsystems.bdsystems_api.employee.repositories.EmployeeRepository;
+
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
@@ -24,6 +27,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -84,7 +88,9 @@ class EmployeeControllerTest {
                   "position": "Engineer",
                   "department": "Product",
                   "admissionDate": "2025-01-10",
-                  "status": "ACTIVE"
+                  "status": "ACTIVE",
+                  "paymentMethod": "DAILY",
+                  "paymentAmount": 1000.00
                 }
                 """))
         .andExpect(status().isCreated())
@@ -93,7 +99,9 @@ class EmployeeControllerTest {
         .andExpect(jsonPath("$.address.city").value("Lisbon"))
         .andExpect(jsonPath("$.companyId").value(company.getId().toString()))
         .andExpect(jsonPath("$.employeeNumber").value("EMP-001"))
-        .andExpect(jsonPath("$.status").value("ACTIVE"));
+        .andExpect(jsonPath("$.status").value("ACTIVE"))
+        .andExpect(jsonPath("$.paymentMethod").value("DAILY"))
+        .andExpect(jsonPath("$.paymentAmount").value(1000.00));
   }
 
   @Test
@@ -115,6 +123,84 @@ class EmployeeControllerTest {
         .andExpect(jsonPath("$.totalPages").value(2))
         .andExpect(jsonPath("$.number").value(0))
         .andExpect(jsonPath("$.size").value(1));
+  }
+
+  @Test
+  void updatesEmployeeForAuthenticatedCompany() throws Exception {
+    Company company = createCompany("Employee Update Company");
+    Employee employee = createEmployee(
+        company,
+        "Taylor Before Update",
+        "before.update@example.com",
+        "EMP-UPDATE"
+    );
+
+    mockMvc.perform(put("/api/employees/{id}", employee.getId())
+            .header("Authorization", "Bearer " + tokenFor(company))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""
+                {
+                  "fullName": "Taylor After Update",
+                  "email": "after.update@example.com",
+                  "phoneNumber": "+351911111111",
+                  "documentNumber": "DOC-UPDATED",
+                  "birthDate": "1991-02-16",
+                  "address": {
+                    "street": "Updated Street",
+                    "city": "Porto",
+                    "state": "Porto",
+                    "zipCode": "4000-001"
+                  },
+                  "employeeNumber": "EMP-UPDATED",
+                  "position": "Senior Engineer",
+                  "department": "Engineering",
+                  "admissionDate": "2025-02-10",
+                  "status": "ACTIVE",
+                  "paymentMethod": "DAILY",
+                  "paymentAmount": 1500.00
+                }
+                """))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(employee.getId().toString()))
+        .andExpect(jsonPath("$.fullName").value("Taylor After Update"))
+        .andExpect(jsonPath("$.email").value("after.update@example.com"))
+        .andExpect(jsonPath("$.address.street").value("Updated Street"))
+        .andExpect(jsonPath("$.address.city").value("Porto"))
+        .andExpect(jsonPath("$.companyId").value(company.getId().toString()))
+        .andExpect(jsonPath("$.employeeNumber").value("EMP-UPDATED"))
+        .andExpect(jsonPath("$.paymentAmount").value(1500.00));
+  }
+
+  @Test
+  void doesNotUpdateEmployeeOwnedByAnotherCompany() throws Exception {
+    Company ownerCompany = createCompany("Employee Owner Company");
+    Company authenticatedCompany = createCompany("Employee Other Company");
+    Employee employee = createEmployee(
+        ownerCompany,
+        "Tenant Isolated Employee",
+        "tenant.isolated@example.com",
+        "EMP-TENANT"
+    );
+
+    mockMvc.perform(put("/api/employees/{id}", employee.getId())
+            .header("Authorization", "Bearer " + tokenFor(authenticatedCompany))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""
+                {
+                  "fullName": "Unauthorized Update",
+                  "email": "unauthorized.update@example.com",
+                  "phoneNumber": "+351922222222",
+                  "address": {
+                    "street": "Unauthorized Street",
+                    "city": "Lisbon",
+                    "state": "Lisbon",
+                    "zipCode": "1000-004"
+                  },
+                  "employeeNumber": "EMP-UNAUTHORIZED",
+                  "position": "Engineer"
+                }
+                """))
+        .andExpect(status().isNotFound());
   }
 
   @Test
@@ -168,11 +254,11 @@ class EmployeeControllerTest {
     return companyRepository.save(new Company(name, address));
   }
 
-  private void createEmployee(Company company, String name, String email, String number) {
+  private Employee createEmployee(Company company, String name, String email, String number) {
     Address address = addressRepository.save(
         new Address(name + " Street", "Lisbon", "Lisbon", "1000-002")
     );
-    employeeRepository.save(new Employee(
+    return employeeRepository.save(new Employee(
         name,
         email,
         "+351900000000",
@@ -185,7 +271,9 @@ class EmployeeControllerTest {
         "Product",
         LocalDate.of(2025, 1, 10),
         null,
-        EmployeeStatus.ACTIVE
+        EmployeeStatus.ACTIVE,
+        PaymentMethod.DAILY,
+        new BigDecimal("1000.00")
     ));
   }
 

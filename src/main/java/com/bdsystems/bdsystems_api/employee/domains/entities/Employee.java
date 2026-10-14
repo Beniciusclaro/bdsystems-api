@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -49,6 +50,12 @@ public class Employee extends Person {
   @Column(nullable = false, length = 32)
   private EmployeeStatus status;
 
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false, length = 32)
+  private PaymentMethod paymentMethod;
+
+  private BigDecimal paymentAmount;
+
   public Employee(
       String fullName,
       String email,
@@ -62,7 +69,9 @@ public class Employee extends Person {
       String department,
       LocalDate admissionDate,
       LocalDate terminationDate,
-      EmployeeStatus status
+      EmployeeStatus status,
+      PaymentMethod paymentMethod,
+      BigDecimal paymentAmount
   ) {
     super(fullName, email, phoneNumber, documentNumber, birthDate, address);
     this.company = company;
@@ -72,5 +81,27 @@ public class Employee extends Person {
     this.admissionDate = admissionDate;
     this.terminationDate = terminationDate;
     this.status = status;
+    this.paymentMethod = paymentMethod;
+    this.paymentAmount = paymentAmount;
+  }
+
+  public void updateEmploymentDetails(
+      String employeeNumber,
+      String position,
+      String department,
+      LocalDate admissionDate,
+      LocalDate terminationDate,
+      EmployeeStatus status,
+      PaymentMethod paymentMethod,
+      BigDecimal paymentAmount
+  ) {
+    this.employeeNumber = employeeNumber;
+    this.position = position;
+    this.department = department;
+    this.admissionDate = admissionDate;
+    this.terminationDate = terminationDate;
+    this.status = status;
+    this.paymentMethod = paymentMethod;
+    this.paymentAmount = paymentAmount;
   }
 }

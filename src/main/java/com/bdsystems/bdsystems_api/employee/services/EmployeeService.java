@@ -73,7 +73,56 @@ public class EmployeeService {
         request.department(),
         request.admissionDate(),
         request.terminationDate(),
-        request.status()
+        request.status(),
+        request.paymentMethod(),
+        request.paymentAmount()
+    );
+
+    return toResponse(employeeRepository.save(employee));
+  }
+
+  @Transactional
+  public EmployeeResponse update(UUID id, EmployeeRequest request, UUID companyId) {
+    Employee employee = employeeRepository.findByIdAndCompanyId(id, companyId)
+        .orElseThrow(() -> new ResponseStatusException(
+            HttpStatus.NOT_FOUND,
+            "Employee not found"
+        ));
+
+    if (employeeRepository.existsByCompanyIdAndEmployeeNumberAndIdNot(
+        companyId,
+        request.employeeNumber(),
+        id
+    )) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT,
+          "Employee number already registered for this company"
+      );
+    }
+
+    EmployeeRequest.AddressRequest addressRequest = request.address();
+    employee.getAddress().update(
+        addressRequest.street(),
+        addressRequest.city(),
+        addressRequest.state(),
+        addressRequest.zipCode()
+    );
+    employee.updatePersonalDetails(
+        request.fullName(),
+        request.email(),
+        request.phoneNumber(),
+        request.documentNumber(),
+        request.birthDate()
+    );
+    employee.updateEmploymentDetails(
+        request.employeeNumber(),
+        request.position(),
+        request.department(),
+        request.admissionDate(),
+        request.terminationDate(),
+        request.status(),
+        request.paymentMethod(),
+        request.paymentAmount()
     );
 
     return toResponse(employeeRepository.save(employee));
@@ -107,7 +156,9 @@ public class EmployeeService {
         employee.getDepartment(),
         employee.getAdmissionDate(),
         employee.getTerminationDate(),
-        employee.getStatus()
+        employee.getStatus(),
+        employee.getPaymentMethod(),
+        employee.getPaymentAmount()
     );
   }
 }

@@ -6,9 +6,18 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.UUID;
+import java.util.Optional;
 
 public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
   boolean existsByCompanyIdAndEmployeeNumber(UUID companyId, String employeeNumber);
+
+  boolean existsByCompanyIdAndEmployeeNumberAndIdNot(
+      UUID companyId,
+      String employeeNumber,
+      UUID id
+  );
+
+  Optional<Employee> findByIdAndCompanyId(UUID id, UUID companyId);
 
   Page<Employee> findAllByCompanyId(UUID companyId, Pageable pageable);
 }

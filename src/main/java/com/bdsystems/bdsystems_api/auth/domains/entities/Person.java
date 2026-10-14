@@ -61,6 +61,20 @@ public abstract class Person {
     this.createdDate = new Date();
   }
 
+  public void updatePersonalDetails(
+      String fullName,
+      String email,
+      String phoneNumber,
+      String documentNumber,
+      LocalDate birthDate
+  ) {
+    this.fullName = fullName;
+    this.email = email;
+    this.phoneNumber = phoneNumber;
+    this.documentNumber = documentNumber;
+    this.birthDate = birthDate;
+  }
+
   @PrePersist
   protected void onCreate() {
     if (createdDate == null) {

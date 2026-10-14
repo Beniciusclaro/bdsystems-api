@@ -101,6 +101,46 @@ paths:
           description: Company not found
         '409':
           description: Employee number already registered for this company
+  /api/employees/{id}:
+    put:
+      tags:
+        - Employee
+      summary: Update an employee
+      description: Replaces employee details for the employee identified by id, if it belongs to the company identified by the authenticated JWT tenant_id claim.
+      operationId: updateEmployee
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Employee UUID.
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeRequest'
+      responses:
+        '200':
+          description: Employee successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeResponse'
+        '400':
+          description: Invalid request data
+        '401':
+          description: Authentication required
+        '403':
+          description: JWT does not contain a valid tenant_id
+        '404':
+          description: Employee not found for the authenticated company
+        '409':
+          description: Employee number already registered for this company
 
 components:
   securitySchemes:
@@ -167,6 +207,18 @@ components:
             - ACTIVE
             - INACTIVE
             - TERMINATED
+            - LEASED
+        paymentMethod:
+          type: string
+          enum:
+            - MONTHLY
+            - WEEKLY
+            - DAILY
+            - HOURLY
+          nullable: true
+        paymentAmount:
+          type: number
+          nullable: true
 
     AddressRequest:
       type: object
@@ -232,6 +284,18 @@ components:
             - ACTIVE
             - INACTIVE
             - TERMINATED
+            - LEASED
+        paymentMethod:
+          type: string
+          enum:
+            - MONTHLY
+            - WEEKLY
+            - DAILY
+            - HOURLY
+          nullable: true
+        paymentAmount:
+          type: number
+          nullable: true
 
     EmployeePage:
       type: object
