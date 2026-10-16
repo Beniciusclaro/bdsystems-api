@@ -1,0 +1,289 @@
+openapi: 3.0.3
+
+info:
+  title: BD Systems API - Tools
+  version: 1.0.0
+
+paths:
+  /api/tools:
+    get:
+      tags:
+        - Tool
+      summary: List tools
+      description: Returns a paginated list of tools belonging to the authenticated company. Optional filters select the active state and match code or name case-insensitively.
+      operationId: findAllTools
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Zero-based page number.
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+            minimum: 0
+        - name: size
+          in: query
+          description: Number of tools per page.
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 20
+            minimum: 1
+        - name: sort
+          in: query
+          description: Sort criteria in the format property,direction. May be specified more than once.
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+            example:
+              - name,asc
+        - name: active
+          in: query
+          description: Optional active-state filter.
+          required: false
+          schema:
+            type: boolean
+        - name: q
+          in: query
+          description: Optional case-insensitive partial match on code or name.
+          required: false
+          schema:
+            type: string
+            example: drill
+      responses:
+        '200':
+          description: A page of tools for the authenticated company
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolPage'
+        '401':
+          description: Authentication required
+        '403':
+          description: JWT does not contain a valid tenant_id
+    post:
+      tags:
+        - Tool
+      summary: Create a tool
+      description: Creates an active tool linked to the company identified by the authenticated JWT tenant_id claim.
+      operationId: createTool
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ToolRequest'
+            example:
+              code: TOOL-001
+              name: Electric drill
+      responses:
+        '201':
+          description: Tool successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolResponse'
+        '400':
+          description: Invalid request data
+        '401':
+          description: Authentication required
+        '403':
+          description: JWT does not contain a valid tenant_id
+        '409':
+          description: Tool code already registered for this company
+  /api/tools/{id}:
+    get:
+      tags:
+        - Tool
+      summary: Get a tool
+      description: Returns a tool if it belongs to the authenticated company.
+      operationId: findToolById
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Tool UUID.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Tool details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolResponse'
+        '401':
+          description: Authentication required
+        '403':
+          description: JWT does not contain a valid tenant_id
+        '404':
+          description: Tool not found for the authenticated company
+    put:
+      tags:
+        - Tool
+      summary: Update a tool
+      description: Replaces the tool code and name if it belongs to the authenticated company.
+      operationId: updateTool
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Tool UUID.
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ToolRequest'
+      responses:
+        '200':
+          description: Tool successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolResponse'
+        '400':
+          description: Invalid request data
+        '401':
+          description: Authentication required
+        '404':
+          description: Tool not found for the authenticated company
+        '409':
+          description: Tool code already registered for this company
+  /api/tools/{id}/activate:
+    patch:
+      tags:
+        - Tool
+      summary: Activate a tool
+      description: Activates the tool if it belongs to the authenticated company.
+      operationId: activateTool
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Tool UUID.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Tool successfully activated
+        '401':
+          description: Authentication required
+        '404':
+          description: Tool not found for the authenticated company
+  /api/tools/{id}/deactivate:
+    patch:
+      tags:
+        - Tool
+      summary: Deactivate a tool
+      description: Deactivates the tool without deleting it or its rental records.
+      operationId: deactivateTool
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Tool UUID.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Tool successfully deactivated
+        '401':
+          description: Authentication required
+        '404':
+          description: Tool not found for the authenticated company
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ToolRequest:
+      type: object
+      required:
+        - code
+        - name
+      properties:
+        code:
+          type: string
+          maxLength: 50
+          example: TOOL-001
+        name:
+          type: string
+          maxLength: 150
+          example: Electric drill
+
+    ToolResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        companyId:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          type: string
+        active:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    ToolPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ToolResponse'
+        page:
+          $ref: '#/components/schemas/PageMetadata'
+
+    PageMetadata:
+      type: object
+      properties:
+        size:
+          type: integer
+          format: int32
+        number:
+          type: integer
+          format: int32
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int32

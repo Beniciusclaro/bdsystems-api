@@ -12,6 +12,10 @@ tags:
     description: Cadastro de funcionários
   - name: Supplier
     description: Cadastro de fornecedores
+  - name: Tool
+    description: Gestão de ferramentas e equipamentos
+  - name: ToolRental
+    description: Gestão de alugueres de ferramentas
 
 paths:
   /api/auth/register:
@@ -28,6 +32,20 @@ paths:
     $ref: './supplier/openapi.yml#/paths/~1api~1suppliers'
   /api/suppliers/{id}:
     $ref: './supplier/openapi.yml#/paths/~1api~1suppliers~1{id}'
+  /api/tools:
+    $ref: './tool/openapi.yml#/paths/~1api~1tools'
+  /api/tools/{id}:
+    $ref: './tool/openapi.yml#/paths/~1api~1tools~1{id}'
+  /api/tools/{id}/activate:
+    $ref: './tool/openapi.yml#/paths/~1api~1tools~1{id}~1activate'
+  /api/tools/{id}/deactivate:
+    $ref: './tool/openapi.yml#/paths/~1api~1tools~1{id}~1deactivate'
+  /api/tools/{toolId}/rentals:
+    $ref: './tool-rental/openapi.yml#/paths/~1api~1tools~1{toolId}~1rentals'
+  /api/tool-rentals:
+    $ref: './tool-rental/openapi.yml#/paths/~1api~1tool-rentals'
+  /api/tool-rentals/{id}:
+    $ref: './tool-rental/openapi.yml#/paths/~1api~1tool-rentals~1{id}'
 
 components:
   securitySchemes:

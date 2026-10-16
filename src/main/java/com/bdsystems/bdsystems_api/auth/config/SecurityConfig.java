@@ -53,6 +53,8 @@ public class SecurityConfig {
                 "/auth/openapi.yml",
                 "/employee/openapi.yml",
                 "/supplier/openapi.yml",
+                "/tool/openapi.yml",
+                "/tool-rental/openapi.yml",
                 "/test"
             )
             .permitAll()
