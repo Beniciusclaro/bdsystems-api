@@ -1,0 +1,318 @@
+openapi: 3.0.3
+
+info:
+  title: BD Systems API - Supplier
+  version: 1.0.0
+
+paths:
+  /api/suppliers:
+    get:
+      tags:
+        - Supplier
+      summary: List suppliers
+      description: Returns a paginated list of active suppliers for the authenticated company.
+      operationId: findAllSuppliers
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Zero-based page number.
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+            minimum: 0
+        - name: size
+          in: query
+          description: Number of suppliers per page.
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 20
+            minimum: 1
+        - name: sort
+          in: query
+          description: Sort criteria in the format property,direction. May be specified more than once.
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+            example:
+              - legalName,asc
+      responses:
+        '200':
+          description: A page of active suppliers for the authenticated company
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierPage'
+        '401':
+          description: Authentication required
+        '403':
+          description: JWT does not contain a valid tenant_id
+    post:
+      tags:
+        - Supplier
+      summary: Register a supplier
+      description: Creates a supplier linked to the company identified by the authenticated JWT tenant_id claim.
+      operationId: createSupplier
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupplierRequest'
+            example:
+              legalName: Acme Supplies Ltd
+              tradeName: Acme Supplies
+              taxNumber: PT123456789
+              email: supplier@example.com
+              phoneNumber: "+351900000000"
+              address:
+                street: Second Street
+                city: Lisbon
+                state: Lisbon
+                zipCode: "1000-002"
+      responses:
+        '201':
+          description: Supplier successfully registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierResponse'
+        '400':
+          description: Invalid request data
+        '401':
+          description: Authentication required
+        '404':
+          description: Company not found
+        '409':
+          description: Supplier tax number already registered for this company
+  /api/suppliers/{id}:
+    get:
+      tags:
+        - Supplier
+      summary: Get a supplier
+      description: Returns an active supplier if it belongs to the company identified by the authenticated JWT tenant_id claim.
+      operationId: findSupplierById
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Supplier UUID.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Supplier details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierResponse'
+        '401':
+          description: Authentication required
+        '403':
+          description: JWT does not contain a valid tenant_id
+        '404':
+          description: Supplier not found for the authenticated company
+    put:
+      tags:
+        - Supplier
+      summary: Update a supplier
+      description: Replaces supplier details if it belongs to the company identified by the authenticated JWT tenant_id claim.
+      operationId: updateSupplier
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Supplier UUID.
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupplierRequest'
+      responses:
+        '200':
+          description: Supplier successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierResponse'
+        '400':
+          description: Invalid request data
+        '401':
+          description: Authentication required
+        '403':
+          description: JWT does not contain a valid tenant_id
+        '404':
+          description: Supplier not found for the authenticated company
+        '409':
+          description: Supplier tax number already registered for this company
+    delete:
+      tags:
+        - Supplier
+      summary: Delete a supplier
+      description: Soft deletes the supplier by setting active to false, if it belongs to the authenticated company.
+      operationId: deleteSupplier
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Supplier UUID.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Supplier successfully deleted
+        '401':
+          description: Authentication required
+        '403':
+          description: JWT does not contain a valid tenant_id
+        '404':
+          description: Supplier not found for the authenticated company
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    SupplierRequest:
+      type: object
+      required:
+        - legalName
+        - address
+      properties:
+        legalName:
+          type: string
+          example: Acme Supplies Ltd
+        tradeName:
+          type: string
+          nullable: true
+          example: Acme Supplies
+        taxNumber:
+          type: string
+          nullable: true
+          example: PT123456789
+        email:
+          type: string
+          format: email
+          nullable: true
+          example: supplier@example.com
+        phoneNumber:
+          type: string
+          nullable: true
+          example: "+351900000000"
+        address:
+          $ref: '#/components/schemas/AddressRequest'
+
+    AddressRequest:
+      type: object
+      required:
+        - street
+        - city
+        - state
+        - zipCode
+      properties:
+        street:
+          type: string
+          example: Second Street
+        city:
+          type: string
+          example: Lisbon
+        state:
+          type: string
+          example: Lisbon
+        zipCode:
+          type: string
+          example: "1000-002"
+
+    SupplierResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        legalName:
+          type: string
+        tradeName:
+          type: string
+          nullable: true
+        taxNumber:
+          type: string
+          nullable: true
+        email:
+          type: string
+          format: email
+          nullable: true
+        phoneNumber:
+          type: string
+          nullable: true
+        address:
+          $ref: '#/components/schemas/AddressResponse'
+        companyId:
+          type: string
+          format: uuid
+        active:
+          type: boolean
+
+    SupplierPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/SupplierResponse'
+        page:
+          type: object
+          properties:
+            size:
+              type: integer
+              format: int32
+              description: Number of elements requested per page.
+            number:
+              type: integer
+              format: int32
+              description: Zero-based page number.
+            totalElements:
+              type: integer
+              format: int64
+              description: Total number of matching suppliers.
+            totalPages:
+              type: integer
+              format: int32
+              description: Total number of pages.
+
+    AddressResponse:
+      type: object
+      properties:
+        street:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zipCode:
+          type: string
