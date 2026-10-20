@@ -1,0 +1,13 @@
+# Run only against a disposable database: Flyway applies the complete migration history.
+# mvn -Dtest=MaterialsControllerTest -Dspring.profiles.active=materials-postgres test
+spring:
+  datasource:
+    url: ${MATERIALS_TEST_DATABASE_URL:jdbc:postgresql://127.0.0.1:55439/materials_test}
+    driver-class-name: org.postgresql.Driver
+    username: ${MATERIALS_TEST_DATABASE_USER:postgres}
+    password: ${MATERIALS_TEST_DATABASE_PASSWORD:materials-test}
+  jpa:
+    hibernate:
+      ddl-auto: none
+  flyway:
+    enabled: true

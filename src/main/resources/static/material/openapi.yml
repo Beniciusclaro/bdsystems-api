@@ -1,0 +1,794 @@
+openapi: 3.0.3
+info:
+  title: Materials — BD Systems API
+  version: 1.0.0
+  description: Company is derived exclusively from JWT tenant_id. Prices are reference
+    values, not budget prices. No stock management. Timestamps use ISO-8601 offsets,
+    following Tool conventions.
+paths:
+  /api/materials:
+    post:
+      tags:
+      - Materials
+      summary: Create material and suppliers atomically
+      security:
+      - bearerAuth: []
+      parameters: []
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaterialResponse'
+        '400':
+          description: Invalid request
+        '401':
+          description: Authentication required
+        '403':
+          description: Invalid tenant claim
+        '404':
+          description: Resource not found in authenticated company
+        '409':
+          description: Duplicate code, category name, or supplier association
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaterialRequest'
+    get:
+      tags:
+      - Materials
+      summary: List company materials
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 20
+      - name: sort
+        in: query
+        schema:
+          type: string
+      - name: name
+        in: query
+        schema:
+          type: string
+      - name: code
+        in: query
+        schema:
+          type: string
+      - name: categoryId
+        in: query
+        schema:
+          type: string
+          format: uuid
+      - name: active
+        in: query
+        schema:
+          type: boolean
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaterialResponsePage'
+        '400':
+          description: Invalid request
+        '401':
+          description: Authentication required
+        '403':
+          description: Invalid tenant claim
+        '404':
+          description: Resource not found in authenticated company
+        '409':
+          description: Duplicate code, category name, or supplier association
+  /api/materials/{id}:
+    get:
+      tags:
+      - Materials
+      summary: Get company material
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaterialResponse'
+        '400':
+          description: Invalid request
+        '401':
+          description: Authentication required
+        '403':
+          description: Invalid tenant claim
+        '404':
+          description: Resource not found in authenticated company
+        '409':
+          description: Duplicate code, category name, or supplier association
+    put:
+      tags:
+      - Materials
+      summary: Update material; preserve omitted supplier associations
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaterialResponse'
+        '400':
+          description: Invalid request
+        '401':
+          description: Authentication required
+        '403':
+          description: Invalid tenant claim
+        '404':
+          description: Resource not found in authenticated company
+        '409':
+          description: Duplicate code, category name, or supplier association
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaterialRequest'
+  /api/materials/{id}/status:
+    patch:
+      tags:
+      - Materials
+      summary: Activate or deactivate material
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '204':
+          description: Success
+        '400':
+          description: Invalid request
+        '401':
+          description: Authentication required
+        '403':
+          description: Invalid tenant claim
+        '404':
+          description: Resource not found in authenticated company
+        '409':
+          description: Duplicate code, category name, or supplier association
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusRequest'
+  /api/materials/{id}/suppliers:
+    get:
+      tags:
+      - Materials
+      summary: List material suppliers
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 20
+      - name: sort
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierMaterialResponsePage'
+        '400':
+          description: Invalid request
+        '401':
+          description: Authentication required
+        '403':
+          description: Invalid tenant claim
+        '404':
+          description: Resource not found in authenticated company
+        '409':
+          description: Duplicate code, category name, or supplier association
+    post:
+      tags:
+      - Materials
+      summary: Add supplier to material
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierMaterialResponse'
+        '400':
+          description: Invalid request
+        '401':
+          description: Authentication required
+        '403':
+          description: Invalid tenant claim
+        '404':
+          description: Resource not found in authenticated company
+        '409':
+          description: Duplicate code, category name, or supplier association
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupplierMaterialRequest'
+  /api/materials/{id}/suppliers/{associationId}:
+    put:
+      tags:
+      - Materials
+      summary: Update supplier code and reference price; supplierId must remain unchanged
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: associationId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierMaterialResponse'
+        '400':
+          description: Invalid request
+        '401':
+          description: Authentication required
+        '403':
+          description: Invalid tenant claim
+        '404':
+          description: Resource not found in authenticated company
+        '409':
+          description: Duplicate code, category name, or supplier association
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupplierMaterialRequest'
+    delete:
+      tags:
+      - Materials
+      summary: Remove supplier association
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: associationId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '204':
+          description: Success
+        '400':
+          description: Invalid request
+        '401':
+          description: Authentication required
+        '403':
+          description: Invalid tenant claim
+        '404':
+          description: Resource not found in authenticated company
+        '409':
+          description: Duplicate code, category name, or supplier association
+  /api/material-categories:
+    post:
+      tags:
+      - Materials
+      summary: Create company category
+      security:
+      - bearerAuth: []
+      parameters: []
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaterialCategoryResponse'
+        '400':
+          description: Invalid request
+        '401':
+          description: Authentication required
+        '403':
+          description: Invalid tenant claim
+        '404':
+          description: Resource not found in authenticated company
+        '409':
+          description: Duplicate code, category name, or supplier association
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaterialCategoryRequest'
+    get:
+      tags:
+      - Materials
+      summary: List company categories
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 20
+      - name: sort
+        in: query
+        schema:
+          type: string
+      - name: active
+        in: query
+        schema:
+          type: boolean
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaterialCategoryResponsePage'
+        '400':
+          description: Invalid request
+        '401':
+          description: Authentication required
+        '403':
+          description: Invalid tenant claim
+        '404':
+          description: Resource not found in authenticated company
+        '409':
+          description: Duplicate code, category name, or supplier association
+  /api/material-categories/{id}:
+    put:
+      tags:
+      - Materials
+      summary: Update company category
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaterialCategoryResponse'
+        '400':
+          description: Invalid request
+        '401':
+          description: Authentication required
+        '403':
+          description: Invalid tenant claim
+        '404':
+          description: Resource not found in authenticated company
+        '409':
+          description: Duplicate code, category name, or supplier association
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaterialCategoryRequest'
+  /api/material-categories/{id}/status:
+    patch:
+      tags:
+      - Materials
+      summary: Activate or deactivate category
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '204':
+          description: Success
+        '400':
+          description: Invalid request
+        '401':
+          description: Authentication required
+        '403':
+          description: Invalid tenant claim
+        '404':
+          description: Resource not found in authenticated company
+        '409':
+          description: Duplicate code, category name, or supplier association
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusRequest'
+  /api/units-of-measure:
+    get:
+      tags:
+      - Materials
+      summary: List shared units; active defaults to true
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 20
+      - name: sort
+        in: query
+        schema:
+          type: string
+      - name: active
+        in: query
+        schema:
+          type: boolean
+          default: true
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnitOfMeasureResponsePage'
+        '400':
+          description: Invalid request
+        '401':
+          description: Authentication required
+        '403':
+          description: Invalid tenant claim
+        '404':
+          description: Resource not found in authenticated company
+        '409':
+          description: Duplicate code, category name, or supplier association
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    SupplierMaterialRequest:
+      type: object
+      properties:
+        supplierId:
+          type: string
+          format: uuid
+        supplierCode:
+          type: string
+          maxLength: 100
+        referencePrice:
+          type: number
+          minimum: 0
+          maximum: 9999999999.99
+          multipleOf: 0.01
+          nullable: true
+      required:
+      - supplierId
+    MaterialRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          maxLength: 50
+        name:
+          type: string
+          maxLength: 150
+        description:
+          type: string
+        unitOfMeasureId:
+          type: string
+          format: uuid
+        categoryId:
+          type: string
+          format: uuid
+          nullable: true
+        active:
+          type: boolean
+        suppliers:
+          type: array
+          items:
+            $ref: '#/components/schemas/SupplierMaterialRequest'
+          description: Optional. Entries are added or updated by supplierId; omitted
+            associations are preserved. Use DELETE to remove an association. Duplicate
+            supplier IDs return 400.
+      required:
+      - code
+      - name
+      - unitOfMeasureId
+    MaterialCategoryRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 150
+        description:
+          type: string
+        active:
+          type: boolean
+      required:
+      - name
+    StatusRequest:
+      type: object
+      properties:
+        active:
+          type: boolean
+      required:
+      - active
+    UnitOfMeasureResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          type: string
+        symbol:
+          type: string
+        active:
+          type: boolean
+      required: []
+    MaterialCategoryResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        companyId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        active:
+          type: boolean
+      required: []
+    MaterialResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        companyId:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        unitOfMeasure:
+          $ref: '#/components/schemas/UnitOfMeasureResponse'
+        category:
+          $ref: '#/components/schemas/MaterialCategoryResponse'
+          nullable: true
+        active:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+      required: []
+    SupplierMaterialResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        materialId:
+          type: string
+          format: uuid
+        supplierId:
+          type: string
+          format: uuid
+        supplierName:
+          type: string
+        supplierCode:
+          type: string
+        referencePrice:
+          type: number
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+      required: []
+    MaterialResponsePage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/MaterialResponse'
+        page:
+          type: object
+          properties:
+            size:
+              type: integer
+            number:
+              type: integer
+            totalElements:
+              type: integer
+            totalPages:
+              type: integer
+      required: []
+    MaterialCategoryResponsePage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/MaterialCategoryResponse'
+        page:
+          type: object
+          properties:
+            size:
+              type: integer
+            number:
+              type: integer
+            totalElements:
+              type: integer
+            totalPages:
+              type: integer
+      required: []
+    UnitOfMeasureResponsePage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/UnitOfMeasureResponse'
+        page:
+          type: object
+          properties:
+            size:
+              type: integer
+            number:
+              type: integer
+            totalElements:
+              type: integer
+            totalPages:
+              type: integer
+      required: []
+    SupplierMaterialResponsePage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/SupplierMaterialResponse'
+        page:
+          type: object
+          properties:
+            size:
+              type: integer
+            number:
+              type: integer
+            totalElements:
+              type: integer
+            totalPages:
+              type: integer
+      required: []
+    ApiError:
+      type: object
+      properties:
+        status:
+          type: integer
+        message:
+          type: string
+        field:
+          type: string
+          nullable: true
+      required: []
