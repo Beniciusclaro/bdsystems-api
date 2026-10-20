@@ -31,7 +31,8 @@ public class MaterialCategoryController {
     @AuthenticationPrincipal Jwt jwt
   ) {
     return ResponseEntity.status(HttpStatus.CREATED)
-      .body(service.createCategory(request, MaterialTenant.companyId(jwt)));
+      .body(service.createCategory(request,
+        MaterialTenant.companyId(jwt)));
   }
 
   @GetMapping
@@ -40,7 +41,9 @@ public class MaterialCategoryController {
     @RequestParam(required = false) Boolean active,
     @AuthenticationPrincipal Jwt jwt
   ) {
-    return service.findCategories(MaterialTenant.companyId(jwt), active, pageable);
+    return service.findCategories(MaterialTenant.companyId(jwt),
+      active,
+      pageable);
   }
 
   @PutMapping("/{id}")
@@ -50,7 +53,9 @@ public class MaterialCategoryController {
     @AuthenticationPrincipal Jwt jwt
   ) {
 
-    return service.updateCategory(id, request, MaterialTenant.companyId(jwt));
+    return service.updateCategory(id,
+      request,
+      MaterialTenant.companyId(jwt));
   }
 
   @PatchMapping("/{id}/status")
@@ -60,7 +65,9 @@ public class MaterialCategoryController {
     @AuthenticationPrincipal Jwt jwt
   ) {
 
-    service.changeCategoryStatus(id, MaterialTenant.companyId(jwt), request.active());
+    service.changeCategoryStatus(id,
+      MaterialTenant.companyId(jwt),
+      request.active());
     return ResponseEntity.noContent().build();
   }
 }

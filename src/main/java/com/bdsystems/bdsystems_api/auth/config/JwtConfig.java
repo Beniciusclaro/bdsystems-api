@@ -18,12 +18,12 @@ public class JwtConfig {
 
   @Bean
   SecretKey secretKey(
-      @Value("${security.jwt.secret}") String secret
+    @Value("${security.jwt.secret}") String secret
   ) {
 
     return new SecretKeySpec(
-        secret.getBytes(StandardCharsets.UTF_8),
-        "HmacSHA256"
+      secret.getBytes(StandardCharsets.UTF_8),
+      "HmacSHA256"
     );
   }
 
@@ -31,7 +31,7 @@ public class JwtConfig {
   JwtEncoder jwtEncoder(SecretKey secretKey) {
 
     return new NimbusJwtEncoder(
-        new ImmutableSecret<>(secretKey)
+      new ImmutableSecret<>(secretKey)
     );
   }
 
@@ -39,7 +39,7 @@ public class JwtConfig {
   JwtDecoder jwtDecoder(SecretKey secretKey) {
 
     return NimbusJwtDecoder
-        .withSecretKey(secretKey)
-        .build();
+      .withSecretKey(secretKey)
+      .build();
   }
 }

@@ -7,5 +7,6 @@ public record MaterialCategoryResponse(
   UUID companyId,
   String name,
   String description,
-  boolean active) {
+  boolean active
+) {
 }

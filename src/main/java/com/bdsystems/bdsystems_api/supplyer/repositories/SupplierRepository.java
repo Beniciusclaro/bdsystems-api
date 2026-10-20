@@ -11,11 +11,16 @@ import java.util.UUID;
 
 @Repository
 public interface SupplierRepository extends JpaRepository<Supplier, UUID> {
-    Page<Supplier> findByCompanyIdAndActiveTrue(UUID companyId, Pageable pageable);
+  Page<Supplier> findByCompanyIdAndActiveTrue(UUID companyId,
+    Pageable pageable);
 
-    Optional<Supplier> findByIdAndCompanyIdAndActiveTrue(UUID id, UUID companyId);
+  Optional<Supplier> findByIdAndCompanyIdAndActiveTrue(UUID id,
+    UUID companyId);
 
-    boolean existsByCompanyIdAndTaxNumber(UUID companyId, String taxNumber);
+  boolean existsByCompanyIdAndTaxNumber(UUID companyId,
+    String taxNumber);
 
-    boolean existsByCompanyIdAndTaxNumberAndIdNot(UUID companyId, String taxNumber, UUID id);
+  boolean existsByCompanyIdAndTaxNumberAndIdNot(UUID companyId,
+    String taxNumber,
+    UUID id);
 }

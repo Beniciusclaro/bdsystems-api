@@ -4,12 +4,12 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 public record ToolResponse(
-        UUID id,
-        UUID companyId,
-        String code,
-        String name,
-        boolean active,
-        OffsetDateTime createdAt,
-        OffsetDateTime updatedAt
+  UUID id,
+  UUID companyId,
+  String code,
+  String name,
+  boolean active,
+  OffsetDateTime createdAt,
+  OffsetDateTime updatedAt
 ) {
 }

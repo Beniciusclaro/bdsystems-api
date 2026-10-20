@@ -11,27 +11,27 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record EmployeeRequest(
-    @NotBlank String fullName,
-    @NotBlank @Email String email,
-    @NotBlank String phoneNumber,
-    String documentNumber,
-    LocalDate birthDate,
-    @NotNull @Valid AddressRequest address,
-    String employeeNumber,
-    @NotBlank String position,
-    String department,
-    LocalDate admissionDate,
-    LocalDate terminationDate,
-    EmployeeStatus status,
-    PaymentMethod paymentMethod,
-    BigDecimal paymentAmount
+  @NotBlank String fullName,
+  @NotBlank @Email String email,
+  @NotBlank String phoneNumber,
+  String documentNumber,
+  LocalDate birthDate,
+  @NotNull @Valid AddressRequest address,
+  String employeeNumber,
+  @NotBlank String position,
+  String department,
+  LocalDate admissionDate,
+  LocalDate terminationDate,
+  EmployeeStatus status,
+  PaymentMethod paymentMethod,
+  BigDecimal paymentAmount
 ) {
 
   public record AddressRequest(
-      @NotBlank String street,
-      @NotBlank String city,
-      @NotBlank String state,
-      @NotBlank String zipCode
+    @NotBlank String street,
+    @NotBlank String city,
+    @NotBlank String state,
+    @NotBlank String zipCode
   ) {
   }
 }

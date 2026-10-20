@@ -29,92 +29,104 @@ import java.util.UUID;
 @RequestMapping("/api/tools")
 public class ToolController {
 
-    private final ToolService toolService;
-    private final ToolRentalService toolRentalService;
+  private final ToolService toolService;
+  private final ToolRentalService toolRentalService;
 
-    public ToolController(ToolService toolService, ToolRentalService toolRentalService) {
-        this.toolService = toolService;
-        this.toolRentalService = toolRentalService;
-    }
+  public ToolController(ToolService toolService,
+    ToolRentalService toolRentalService) {
+    this.toolService = toolService;
+    this.toolRentalService = toolRentalService;
+  }
 
-    @PostMapping
-    public ResponseEntity<ToolResponse> create(
-            @Valid @RequestBody ToolRequest request,
-            @AuthenticationPrincipal Jwt jwt
-    ) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(toolService.create(request, companyIdFrom(jwt)));
-    }
+  @PostMapping
+  public ResponseEntity<ToolResponse> create(
+    @Valid @RequestBody ToolRequest request,
+    @AuthenticationPrincipal Jwt jwt
+  ) {
+    return ResponseEntity.status(HttpStatus.CREATED)
+      .body(toolService.create(request,
+        companyIdFrom(jwt)));
+  }
 
-    @GetMapping
-    public Page<ToolResponse> findAll(
-            Pageable pageable,
-            @RequestParam(required = false) Boolean active,
-            @RequestParam(required = false) String q,
-            @AuthenticationPrincipal Jwt jwt
-    ) {
-        return toolService.findAll(companyIdFrom(jwt), pageable, active, q);
-    }
+  @GetMapping
+  public Page<ToolResponse> findAll(
+    Pageable pageable,
+    @RequestParam(required = false) Boolean active,
+    @RequestParam(required = false) String q,
+    @AuthenticationPrincipal Jwt jwt
+  ) {
+    return toolService.findAll(companyIdFrom(jwt),
+      pageable,
+      active,
+      q);
+  }
 
-    @GetMapping("/{id}")
-    public ToolResponse findById(
-            @PathVariable UUID id,
-            @AuthenticationPrincipal Jwt jwt
-    ) {
-        return toolService.findById(id, companyIdFrom(jwt));
-    }
+  @GetMapping("/{id}")
+  public ToolResponse findById(
+    @PathVariable UUID id,
+    @AuthenticationPrincipal Jwt jwt
+  ) {
+    return toolService.findById(id,
+      companyIdFrom(jwt));
+  }
 
-    @PutMapping("/{id}")
-    public ToolResponse update(
-            @PathVariable UUID id,
-            @Valid @RequestBody ToolRequest request,
-            @AuthenticationPrincipal Jwt jwt
-    ) {
-        return toolService.update(id, request, companyIdFrom(jwt));
-    }
+  @PutMapping("/{id}")
+  public ToolResponse update(
+    @PathVariable UUID id,
+    @Valid @RequestBody ToolRequest request,
+    @AuthenticationPrincipal Jwt jwt
+  ) {
+    return toolService.update(id,
+      request,
+      companyIdFrom(jwt));
+  }
 
-    @PatchMapping("/{id}/activate")
-    public ResponseEntity<Void> activate(
-            @PathVariable UUID id,
-            @AuthenticationPrincipal Jwt jwt
-    ) {
-        toolService.activate(id, companyIdFrom(jwt));
-        return ResponseEntity.noContent().build();
-    }
+  @PatchMapping("/{id}/activate")
+  public ResponseEntity<Void> activate(
+    @PathVariable UUID id,
+    @AuthenticationPrincipal Jwt jwt
+  ) {
+    toolService.activate(id,
+      companyIdFrom(jwt));
+    return ResponseEntity.noContent().build();
+  }
 
-    @PatchMapping("/{id}/deactivate")
-    public ResponseEntity<Void> deactivate(
-            @PathVariable UUID id,
-            @AuthenticationPrincipal Jwt jwt
-    ) {
-        toolService.deactivate(id, companyIdFrom(jwt));
-        return ResponseEntity.noContent().build();
-    }
+  @PatchMapping("/{id}/deactivate")
+  public ResponseEntity<Void> deactivate(
+    @PathVariable UUID id,
+    @AuthenticationPrincipal Jwt jwt
+  ) {
+    toolService.deactivate(id,
+      companyIdFrom(jwt));
+    return ResponseEntity.noContent().build();
+  }
 
-    @GetMapping("/{toolId}/rentals")
-    public Page<ToolRentalResponse> findRentals(
-            @PathVariable UUID toolId,
-            Pageable pageable,
-            @AuthenticationPrincipal Jwt jwt
-    ) {
-        return toolRentalService.findByToolId(toolId, companyIdFrom(jwt), pageable);
-    }
+  @GetMapping("/{toolId}/rentals")
+  public Page<ToolRentalResponse> findRentals(
+    @PathVariable UUID toolId,
+    Pageable pageable,
+    @AuthenticationPrincipal Jwt jwt
+  ) {
+    return toolRentalService.findByToolId(toolId,
+      companyIdFrom(jwt),
+      pageable);
+  }
 
-    private UUID companyIdFrom(Jwt jwt) {
-        String tenantIdClaim = jwt.getClaimAsString("tenant_id");
-        if (tenantIdClaim == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "JWT does not contain a valid tenant_id"
-            );
-        }
-        try {
-            return UUID.fromString(tenantIdClaim);
-        } catch (IllegalArgumentException exception) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "JWT does not contain a valid tenant_id"
-            );
-        }
+  private UUID companyIdFrom(Jwt jwt) {
+    String tenantIdClaim = jwt.getClaimAsString("tenant_id");
+    if (tenantIdClaim == null) {
+      throw new ResponseStatusException(
+        HttpStatus.FORBIDDEN,
+        "JWT does not contain a valid tenant_id"
+      );
     }
+    try {
+      return UUID.fromString(tenantIdClaim);
+    } catch (IllegalArgumentException exception) {
+      throw new ResponseStatusException(
+        HttpStatus.FORBIDDEN,
+        "JWT does not contain a valid tenant_id"
+      );
+    }
+  }
 }

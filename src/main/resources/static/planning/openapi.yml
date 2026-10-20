@@ -1,0 +1,62 @@
+openapi: 3.0.3
+info:
+  title: Planning and budgets — BD Systems API
+  version: 1.0.0
+security:
+  - bearerAuth: [ ]
+paths:
+  /api/clients:
+    get: { tags: [ Planning ], summary: List clients, responses: { '200': { description: Client page } } }
+    post:
+      tags: [ Planning ]
+      summary: Create client
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ClientRequest' } } } }
+      responses: { '201': { description: Client created } }
+  /api/clients/{id}:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    get: { tags: [ Planning ], summary: Get client, responses: { '200': { description: Client } } }
+    put: { tags: [ Planning ], summary: Update client, requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ClientRequest' } } } }, responses: { '200': { description: Client updated } } }
+  /api/projects:
+    get: { tags: [ Planning ], summary: List projects, responses: { '200': { description: Project page } } }
+    post: { tags: [ Planning ], summary: Create project, responses: { '201': { description: Project created } } }
+  /api/projects/{id}:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    get: { tags: [ Planning ], summary: Get project, responses: { '200': { description: Project } } }
+    put: { tags: [ Planning ], summary: Update project, responses: { '200': { description: Project updated } } }
+  /api/labor-roles:
+    get: { tags: [ Planning ], summary: List labor roles and current hourly costs, responses: { '200': { description: Labor role page } } }
+    post: { tags: [ Planning ], summary: Create labor role, responses: { '201': { description: Labor role created } } }
+  /api/compositions:
+    get: { tags: [ Planning ], summary: List service compositions, responses: { '200': { description: Composition page } } }
+    post: { tags: [ Planning ], summary: Create composition with components, responses: { '201': { description: Composition created } } }
+  /api/compositions/{id}:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    get: { tags: [ Planning ], summary: Get live calculated composition, responses: { '200': { description: Composition } } }
+    put: { tags: [ Planning ], summary: Replace composition details and components, responses: { '200': { description: Composition updated } } }
+  /api/budgets:
+    get: { tags: [ Planning ], summary: List budgets, responses: { '200': { description: Budget page } } }
+    post: { tags: [ Planning ], summary: Create budget draft, responses: { '201': { description: Budget created } } }
+  /api/budgets/{id}:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    get: { tags: [ Planning ], summary: Get budget with stages and services, responses: { '200': { description: Budget } } }
+    put: { tags: [ Planning ], summary: Update budget commercial data, responses: { '200': { description: Budget updated } } }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+  parameters:
+    Id: { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+  schemas:
+    ClientRequest:
+      type: object
+      required: [ type, name ]
+      properties:
+        type: { type: string, enum: [ INDIVIDUAL, COMPANY ] }
+        name: { type: string, maxLength: 180 }
+        document: { type: string, maxLength: 32 }
+        email: { type: string, format: email }
+        phone: { type: string }
+        street: { type: string }
+        city: { type: string }
+        state: { type: string }
+        zipCode: { type: string }
+        active: { type: boolean }

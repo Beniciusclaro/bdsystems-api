@@ -15,7 +15,8 @@ import java.time.Instant;
 public class JwtService {
 
   private final JwtEncoder jwtEncoder;
-  @Value("${security.jwt.issuer}") private String issuer;
+  @Value("${security.jwt.issuer}")
+  private String issuer;
 
   public JwtService(JwtEncoder jwtEncoder) {
     this.jwtEncoder = jwtEncoder;
@@ -27,26 +28,27 @@ public class JwtService {
     Instant now = Instant.now();
 
     JwtClaimsSet claims = JwtClaimsSet.builder()
-        .issuer(issuer)
-        .issuedAt(now)
-        .expiresAt(now.plusSeconds(3600))
-        .subject(user.getId().toString())
-        .claim(
-            "tenant_id",
-            user.getCompany().getId().toString()
-        )
-        .claim(
-            "role",
-            user.getRole().name()
-        )
-        .build();
+      .issuer(issuer)
+      .issuedAt(now)
+      .expiresAt(now.plusSeconds(3600))
+      .subject(user.getId().toString())
+      .claim(
+        "tenant_id",
+        user.getCompany().getId().toString()
+      )
+      .claim(
+        "role",
+        user.getRole().name()
+      )
+      .build();
 
     JwsHeader header = JwsHeader.with(
-        MacAlgorithm.HS256
+      MacAlgorithm.HS256
     ).build();
 
     return jwtEncoder.encode(
-        JwtEncoderParameters.from(header, claims)
+      JwtEncoderParameters.from(header,
+        claims)
     ).getTokenValue();
   }
 }

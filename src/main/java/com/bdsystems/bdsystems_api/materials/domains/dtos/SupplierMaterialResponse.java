@@ -10,5 +10,6 @@ public record SupplierMaterialResponse(
   String supplierCode,
   java.math.BigDecimal referencePrice,
   java.time.OffsetDateTime createdAt,
-  java.time.OffsetDateTime updatedAt) {
+  java.time.OffsetDateTime updatedAt
+) {
 }

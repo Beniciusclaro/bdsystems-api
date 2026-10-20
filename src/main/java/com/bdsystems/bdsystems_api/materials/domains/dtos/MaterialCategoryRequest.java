@@ -6,5 +6,6 @@ import jakarta.validation.constraints.Size;
 public record MaterialCategoryRequest(
   @NotBlank @Size(max = 150) String name,
   String description,
-  Boolean active) {
+  Boolean active
+) {
 }

@@ -16,6 +16,8 @@ tags:
     description: Gestão de ferramentas e equipamentos
   - name: ToolRental
     description: Gestão de alugueres de ferramentas
+  - name: Planning
+    description: Clientes, obras, composições e orçamentos
 
 paths:
   /api/auth/register:
@@ -65,6 +67,24 @@ paths:
     $ref: './material/openapi.yml#/paths/~1api~1material-categories~1{id}~1status'
   /api/units-of-measure:
     $ref: './material/openapi.yml#/paths/~1api~1units-of-measure'
+  /api/clients:
+    $ref: './planning/openapi.yml#/paths/~1api~1clients'
+  /api/clients/{id}:
+    $ref: './planning/openapi.yml#/paths/~1api~1clients~1{id}'
+  /api/projects:
+    $ref: './planning/openapi.yml#/paths/~1api~1projects'
+  /api/projects/{id}:
+    $ref: './planning/openapi.yml#/paths/~1api~1projects~1{id}'
+  /api/labor-roles:
+    $ref: './planning/openapi.yml#/paths/~1api~1labor-roles'
+  /api/compositions:
+    $ref: './planning/openapi.yml#/paths/~1api~1compositions'
+  /api/compositions/{id}:
+    $ref: './planning/openapi.yml#/paths/~1api~1compositions~1{id}'
+  /api/budgets:
+    $ref: './planning/openapi.yml#/paths/~1api~1budgets'
+  /api/budgets/{id}:
+    $ref: './planning/openapi.yml#/paths/~1api~1budgets~1{id}'
 
 components:
   securitySchemes:

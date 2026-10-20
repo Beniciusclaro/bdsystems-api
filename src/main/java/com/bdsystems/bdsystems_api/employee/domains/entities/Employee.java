@@ -14,11 +14,11 @@ import java.util.UUID;
 @Getter
 @Entity
 @Table(
-    name = "employees",
-    uniqueConstraints = @UniqueConstraint(
-        name = "uk_employees_company_number",
-        columnNames = {"company_id", "employee_number"}
-    )
+  name = "employees",
+  uniqueConstraints = @UniqueConstraint(
+    name = "uk_employees_company_number",
+    columnNames = {"company_id", "employee_number"}
+  )
 )
 @NoArgsConstructor
 public class Employee extends Person {
@@ -60,23 +60,28 @@ public class Employee extends Person {
   private BigDecimal paymentAmount;
 
   public Employee(
-      String fullName,
-      String email,
-      String phoneNumber,
-      String documentNumber,
-      LocalDate birthDate,
-      Address address,
-      Company company,
-      String employeeNumber,
-      String position,
-      String department,
-      LocalDate admissionDate,
-      LocalDate terminationDate,
-      EmployeeStatus status,
-      PaymentMethod paymentMethod,
-      BigDecimal paymentAmount
+    String fullName,
+    String email,
+    String phoneNumber,
+    String documentNumber,
+    LocalDate birthDate,
+    Address address,
+    Company company,
+    String employeeNumber,
+    String position,
+    String department,
+    LocalDate admissionDate,
+    LocalDate terminationDate,
+    EmployeeStatus status,
+    PaymentMethod paymentMethod,
+    BigDecimal paymentAmount
   ) {
-    super(fullName, email, phoneNumber, documentNumber, birthDate, address);
+    super(fullName,
+      email,
+      phoneNumber,
+      documentNumber,
+      birthDate,
+      address);
     this.company = company;
     this.employeeNumber = employeeNumber;
     this.position = position;
@@ -89,14 +94,14 @@ public class Employee extends Person {
   }
 
   public void updateEmploymentDetails(
-      String employeeNumber,
-      String position,
-      String department,
-      LocalDate admissionDate,
-      LocalDate terminationDate,
-      EmployeeStatus status,
-      PaymentMethod paymentMethod,
-      BigDecimal paymentAmount
+    String employeeNumber,
+    String position,
+    String department,
+    LocalDate admissionDate,
+    LocalDate terminationDate,
+    EmployeeStatus status,
+    PaymentMethod paymentMethod,
+    BigDecimal paymentAmount
   ) {
     this.employeeNumber = employeeNumber;
     this.position = position;

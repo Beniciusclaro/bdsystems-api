@@ -19,87 +19,87 @@ import java.util.UUID;
 @NoArgsConstructor
 public class ToolRental {
 
-    @Id
-    @UuidGenerator
-    private UUID id;
+  @Id
+  @UuidGenerator
+  private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "company_id", nullable = false)
-    private Company company;
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "company_id", nullable = false)
+  private Company company;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "tool_id", nullable = false)
-    private Tool tool;
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "tool_id", nullable = false)
+  private Tool tool;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "supplier_id", nullable = false)
-    private Supplier supplier;
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "supplier_id", nullable = false)
+  private Supplier supplier;
 
-    @Column(nullable = false, precision = 12, scale = 2)
-    private BigDecimal price;
+  @Column(nullable = false, precision = 12, scale = 2)
+  private BigDecimal price;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "rental_period", nullable = false, length = 20)
-    private RentalPeriod rentalPeriod;
+  @Enumerated(EnumType.STRING)
+  @Column(name = "rental_period", nullable = false, length = 20)
+  private RentalPeriod rentalPeriod;
 
-    @Column(name = "rental_start_date")
-    private LocalDate rentalStartDate;
+  @Column(name = "rental_start_date")
+  private LocalDate rentalStartDate;
 
-    @Column(name = "rental_end_date")
-    private LocalDate rentalEndDate;
+  @Column(name = "rental_end_date")
+  private LocalDate rentalEndDate;
 
-    @Column(name = "created_at", nullable = false)
-    private OffsetDateTime createdAt;
+  @Column(name = "created_at", nullable = false)
+  private OffsetDateTime createdAt;
 
-    @Column(name = "updated_at")
-    private OffsetDateTime updatedAt;
+  @Column(name = "updated_at")
+  private OffsetDateTime updatedAt;
 
-    public ToolRental(
-            Company company,
-            Tool tool,
-            Supplier supplier,
-            BigDecimal price,
-            RentalPeriod rentalPeriod,
-            LocalDate rentalStartDate,
-            LocalDate rentalEndDate
-    ) {
-        this.company = company;
-        this.tool = tool;
-        this.supplier = supplier;
-        this.price = price;
-        this.rentalPeriod = rentalPeriod;
-        this.rentalStartDate = rentalStartDate;
-        this.rentalEndDate = rentalEndDate;
-    }
+  public ToolRental(
+    Company company,
+    Tool tool,
+    Supplier supplier,
+    BigDecimal price,
+    RentalPeriod rentalPeriod,
+    LocalDate rentalStartDate,
+    LocalDate rentalEndDate
+  ) {
+    this.company = company;
+    this.tool = tool;
+    this.supplier = supplier;
+    this.price = price;
+    this.rentalPeriod = rentalPeriod;
+    this.rentalStartDate = rentalStartDate;
+    this.rentalEndDate = rentalEndDate;
+  }
 
-    public void updateDetails(
-            Tool tool,
-            Supplier supplier,
-            BigDecimal price,
-            RentalPeriod rentalPeriod,
-            LocalDate rentalStartDate,
-            LocalDate rentalEndDate
-    ) {
-        this.tool = tool;
-        this.supplier = supplier;
-        this.price = price;
-        this.rentalPeriod = rentalPeriod;
-        this.rentalStartDate = rentalStartDate;
-        this.rentalEndDate = rentalEndDate;
-    }
+  public void updateDetails(
+    Tool tool,
+    Supplier supplier,
+    BigDecimal price,
+    RentalPeriod rentalPeriod,
+    LocalDate rentalStartDate,
+    LocalDate rentalEndDate
+  ) {
+    this.tool = tool;
+    this.supplier = supplier;
+    this.price = price;
+    this.rentalPeriod = rentalPeriod;
+    this.rentalStartDate = rentalStartDate;
+    this.rentalEndDate = rentalEndDate;
+  }
 
-    void assignTool(Tool tool) {
-        this.tool = tool;
-    }
+  void assignTool(Tool tool) {
+    this.tool = tool;
+  }
 
-    @PrePersist
-    protected void onCreate() {
-        createdAt = OffsetDateTime.now();
-    }
+  @PrePersist
+  protected void onCreate() {
+    createdAt = OffsetDateTime.now();
+  }
 
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = OffsetDateTime.now();
-    }
+  @PreUpdate
+  protected void onUpdate() {
+    updatedAt = OffsetDateTime.now();
+  }
 
 }

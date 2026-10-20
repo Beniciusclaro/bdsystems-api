@@ -13,7 +13,7 @@ paths:
       description: Returns a paginated list of rental records for a tool belonging to the authenticated company.
       operationId: findToolRentals
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
         - name: toolId
           in: path
@@ -66,7 +66,7 @@ paths:
       description: Returns a paginated list of rental records belonging to the authenticated company.
       operationId: findAllToolRentals
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
         - name: page
           in: query
@@ -109,7 +109,7 @@ paths:
       description: Creates a rental record for an active tool and active supplier belonging to the authenticated company.
       operationId: createToolRental
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -144,7 +144,7 @@ paths:
       description: Returns a rental record if it belongs to the authenticated company.
       operationId: findToolRentalById
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
         - name: id
           in: path
@@ -171,7 +171,7 @@ paths:
       description: Replaces a rental record's tool, supplier, price, period, and dates. Tool and supplier must be active and belong to the authenticated company.
       operationId: updateToolRental
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
         - name: id
           in: path
@@ -206,7 +206,7 @@ paths:
       description: Deletes a rental record belonging to the authenticated company.
       operationId: deleteToolRental
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
         - name: id
           in: path

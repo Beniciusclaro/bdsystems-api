@@ -1,5 +1,5 @@
 ALTER TABLE users
-    ADD COLUMN phone_number VARCHAR(255),
+  ADD COLUMN phone_number VARCHAR(255),
     ADD COLUMN document_number VARCHAR(255),
     ADD COLUMN birth_date DATE,
     ADD COLUMN active BOOLEAN NOT NULL DEFAULT TRUE,

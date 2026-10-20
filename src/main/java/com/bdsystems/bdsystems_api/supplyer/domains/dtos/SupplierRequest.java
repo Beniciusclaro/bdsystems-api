@@ -6,10 +6,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 public record SupplierRequest(
-        @NotBlank String legalName,
-        String tradeName,
-        String taxNumber,
-        @Email String email,
-        String phoneNumber,
-        @NotNull @Valid AddressRequest address
-) {}
+  @NotBlank String legalName,
+  String tradeName,
+  String taxNumber,
+  @Email String email,
+  String phoneNumber,
+  @NotNull @Valid AddressRequest address
+) {
+}

@@ -31,79 +31,81 @@ public class SecurityConfig {
 
   @Bean
   SecurityFilterChain securityFilterChain(
-      HttpSecurity http
+    HttpSecurity http
   ) throws Exception {
 
     http
-        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-        .csrf(AbstractHttpConfigurer::disable)
-        .sessionManagement(session ->
-            session.sessionCreationPolicy(
-                SessionCreationPolicy.STATELESS
-            )
+      .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+      .csrf(AbstractHttpConfigurer::disable)
+      .sessionManagement(session ->
+        session.sessionCreationPolicy(
+          SessionCreationPolicy.STATELESS
         )
-        .authorizeHttpRequests(auth -> auth
-            .requestMatchers(
-                "/api/auth/register",
-                "/api/auth/login",
-                "/api/user/register",
-                "/swagger-ui/**",
-                "/v3/api-docs/**",
-                "/openapi.yml",
-                "/auth/openapi.yml",
-                "/employee/openapi.yml",
-                "/supplier/openapi.yml",
-                "/tool/openapi.yml",
-                "/tool-rental/openapi.yml",
-                "/material/openapi.yml",
-                "/test"
-            )
-            .permitAll()
-            .requestMatchers(
-                "/api/auth/logout"
-            ).authenticated()
-            .anyRequest().authenticated()
+      )
+      .authorizeHttpRequests(auth -> auth
+        .requestMatchers(
+          "/api/auth/register",
+          "/api/auth/login",
+          "/api/user/register",
+          "/swagger-ui/**",
+          "/v3/api-docs/**",
+          "/openapi.yml",
+          "/auth/openapi.yml",
+          "/employee/openapi.yml",
+          "/supplier/openapi.yml",
+          "/tool/openapi.yml",
+          "/tool-rental/openapi.yml",
+          "/material/openapi.yml",
+          "/planning/openapi.yml",
+          "/test"
         )
-        .oauth2ResourceServer(oauth2 ->
-            oauth2.jwt(Customizer.withDefaults())
-        );
+        .permitAll()
+        .requestMatchers(
+          "/api/auth/logout"
+        ).authenticated()
+        .anyRequest().authenticated()
+      )
+      .oauth2ResourceServer(oauth2 ->
+        oauth2.jwt(Customizer.withDefaults())
+      );
 
     return http.build();
   }
 
   @Bean
   public AuthenticationManager authenticationManager(
-      AuthenticationConfiguration configuration
+    AuthenticationConfiguration configuration
   ) {
     return configuration.getAuthenticationManager();
   }
 
-    @Bean
-    CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
+  @Bean
+  CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOriginPatterns(List.of(
-                "http://localhost:9090",
-                "http://localhost:5173",
-                "http://192.168.1.249:9090"
-        ));
+    configuration.setAllowedOriginPatterns(List.of(
+      "http://localhost:9090",
+      "http://localhost:5173",
+      "http://192.168.1.249:9090"
+    ));
 
-        configuration.setAllowedMethods(List.of(
-                "GET",
-                "POST",
-                "PUT",
-                "DELETE",
-                "OPTIONS",
-                "PATCH"
-        ));
+    configuration.setAllowedMethods(List.of(
+      "GET",
+      "POST",
+      "PUT",
+      "DELETE",
+      "OPTIONS",
+      "PATCH"
+    ));
 
-        configuration.setAllowedHeaders(List.of("*"));
+    configuration.setAllowedHeaders(List.of("*"));
 
-        UrlBasedCorsConfigurationSource source =
-                new UrlBasedCorsConfigurationSource();
+    UrlBasedCorsConfigurationSource source =
+      new UrlBasedCorsConfigurationSource();
 
-        source.registerCorsConfiguration("/**", configuration);
+    source.registerCorsConfiguration("/**",
+      configuration);
 
-        return source;
-    }
+    return source;
+  }
 }

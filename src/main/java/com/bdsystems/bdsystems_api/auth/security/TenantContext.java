@@ -5,7 +5,7 @@ import java.util.UUID;
 public final class TenantContext {
 
   private static final ThreadLocal<UUID> TENANT =
-      new ThreadLocal<>();
+    new ThreadLocal<>();
 
   private TenantContext() {
   }
@@ -19,7 +19,7 @@ public final class TenantContext {
 
     if (tenantId == null) {
       throw new IllegalStateException(
-          "Tenant context not initialized"
+        "Tenant context not initialized"
       );
     }
 

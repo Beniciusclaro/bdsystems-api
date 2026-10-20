@@ -13,25 +13,30 @@ import java.util.UUID;
 
 @Repository
 public interface ToolRepository extends JpaRepository<Tool, UUID> {
-    @Query("""
-            SELECT tool FROM Tool tool
-            WHERE tool.company.id = :companyId
-              AND (:active IS NULL OR tool.active = :active)
-              AND (:query = '' OR LOWER(tool.code) LIKE LOWER(CONCAT('%', :query, '%'))
-                   OR LOWER(tool.name) LIKE LOWER(CONCAT('%', :query, '%')))
-            """)
-    Page<Tool> findByFilters(
-            @Param("companyId") UUID companyId,
-            @Param("active") Boolean active,
-            @Param("query") String query,
-            Pageable pageable
-    );
+  @Query("""
+    SELECT tool FROM Tool tool
+    WHERE tool.company.id = :companyId
+      AND (:active IS NULL OR tool.active = :active)
+      AND (:query = '' OR LOWER(tool.code) LIKE LOWER(CONCAT('%', :query, '%'))
+           OR LOWER(tool.name) LIKE LOWER(CONCAT('%', :query, '%')))
+    """)
+  Page<Tool> findByFilters(
+    @Param("companyId") UUID companyId,
+    @Param("active") Boolean active,
+    @Param("query") String query,
+    Pageable pageable
+  );
 
-    Optional<Tool> findByIdAndCompanyId(UUID id, UUID companyId);
+  Optional<Tool> findByIdAndCompanyId(UUID id,
+    UUID companyId);
 
-    Optional<Tool> findByIdAndCompanyIdAndActiveTrue(UUID id, UUID companyId);
+  Optional<Tool> findByIdAndCompanyIdAndActiveTrue(UUID id,
+    UUID companyId);
 
-    boolean existsByCompanyIdAndCode(UUID companyId, String code);
+  boolean existsByCompanyIdAndCode(UUID companyId,
+    String code);
 
-    boolean existsByCompanyIdAndCodeAndIdNot(UUID companyId, String code, UUID id);
+  boolean existsByCompanyIdAndCodeAndIdNot(UUID companyId,
+    String code,
+    UUID id);
 }

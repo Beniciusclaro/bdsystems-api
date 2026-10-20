@@ -9,11 +9,11 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 public record ToolRentalRequest(
-        @NotNull UUID toolId,
-        @NotNull UUID supplierId,
-        @NotNull @DecimalMin("0.00") BigDecimal price,
-        @NotNull RentalPeriod rentalPeriod,
-        LocalDate rentalStartDate,
-        LocalDate rentalEndDate
+  @NotNull UUID toolId,
+  @NotNull UUID supplierId,
+  @NotNull @DecimalMin("0.00") BigDecimal price,
+  @NotNull RentalPeriod rentalPeriod,
+  LocalDate rentalStartDate,
+  LocalDate rentalEndDate
 ) {
 }

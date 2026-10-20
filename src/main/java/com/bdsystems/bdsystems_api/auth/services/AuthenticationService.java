@@ -31,10 +31,12 @@ public class AuthenticationService {
   private final AuthenticationManager authenticationManager;
 
   public AuthenticationService(
-      CompanyRepository companyRepository,
-      UserRepository userRepository,
-      PasswordEncoder passwordEncoder,
-      AddressRepository addressRepository, JwtService jwtService, AuthenticationManager authenticationManager
+    CompanyRepository companyRepository,
+    UserRepository userRepository,
+    PasswordEncoder passwordEncoder,
+    AddressRepository addressRepository,
+    JwtService jwtService,
+    AuthenticationManager authenticationManager
   ) {
     this.companyRepository = companyRepository;
     this.userRepository = userRepository;
@@ -46,7 +48,7 @@ public class AuthenticationService {
 
   @Transactional
   public UserResponse register(
-      UserRequest request
+    UserRequest request
   ) {
     if (userRepository.existsByEmail(request.email())) {
       throw new EmailAlreadyRegisteredException(request.email());
@@ -55,36 +57,36 @@ public class AuthenticationService {
     var existingCompany = companyRepository.findByName(request.company().name());
 
     Company company = existingCompany.orElseGet(() -> companyRepository.save(
-        new Company(
-            request.company().name(),
-            addressRepository.save(
-                new Address(
-                    request.company().address().street(),
-                    request.company().address().city(),
-                    request.company().address().state(),
-                    request.company().address().zipcode()
-                )
-            )
+      new Company(
+        request.company().name(),
+        addressRepository.save(
+          new Address(
+            request.company().address().street(),
+            request.company().address().city(),
+            request.company().address().state(),
+            request.company().address().zipcode()
+          )
         )
+      )
     ));
 
     Role role = existingCompany.isPresent() ? Role.USER : Role.ADMIN;
 
     Address savedAddress = addressRepository.save(new Address(
-        request.company().address().street(),
-        request.company().address().city(),
-        request.company().address().state(),
-        request.company().address().zipcode()
+      request.company().address().street(),
+      request.company().address().city(),
+      request.company().address().state(),
+      request.company().address().zipcode()
     ));
 
     User user = new User(
-        null,
-        request.name(),
-        request.email(),
-        passwordEncoder.encode(request.password()),
-        role,
-        savedAddress,
-        company
+      null,
+      request.name(),
+      request.email(),
+      passwordEncoder.encode(request.password()),
+      role,
+      savedAddress,
+      company
     );
 
     user = userRepository.save(user);
@@ -92,23 +94,23 @@ public class AuthenticationService {
     String jwtToken = jwtService.generateToken(user);
 
     return new UserResponse(
-        jwtToken
+      jwtToken
     );
   }
 
   public LoginResponse login(LoginRequest request) {
 
     authenticationManager.authenticate(
-        new UsernamePasswordAuthenticationToken(
-            request.email(),
-            request.password()
-        )
+      new UsernamePasswordAuthenticationToken(
+        request.email(),
+        request.password()
+      )
     );
 
     User user = userRepository.findByEmail(
         request.email())
-        .orElseThrow(() ->
-            new UsernameNotFoundException("User not found") );
+      .orElseThrow(() ->
+        new UsernameNotFoundException("User not found"));
     String token = jwtService.generateToken(user);
 
     return new LoginResponse(token);

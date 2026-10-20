@@ -13,7 +13,7 @@ paths:
       description: Returns a paginated list of active suppliers for the authenticated company.
       operationId: findAllSuppliers
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
         - name: page
           in: query
@@ -63,7 +63,7 @@ paths:
       description: Creates a supplier linked to the company identified by the authenticated JWT tenant_id claim.
       operationId: createSupplier
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -104,7 +104,7 @@ paths:
       description: Returns an active supplier if it belongs to the company identified by the authenticated JWT tenant_id claim.
       operationId: findSupplierById
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
         - name: id
           in: path
@@ -133,7 +133,7 @@ paths:
       description: Replaces supplier details if it belongs to the company identified by the authenticated JWT tenant_id claim.
       operationId: updateSupplier
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
         - name: id
           in: path
@@ -172,7 +172,7 @@ paths:
       description: Soft deletes the supplier by setting active to false, if it belongs to the authenticated company.
       operationId: deleteSupplier
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
         - name: id
           in: path

@@ -12,23 +12,24 @@ import java.util.UUID;
 @NoArgsConstructor
 public class Company {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
-    @Column(nullable = false, length = 150)
-    private String name;
+  @Column(nullable = false, length = 150)
+  private String name;
 
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
+  @Column(name = "created_at", nullable = false)
+  private Instant createdAt;
 
-    @OneToOne(optional = false)
-    @JoinColumn(name = "address_id", nullable = false, unique = true)
-    private Address address;
+  @OneToOne(optional = false)
+  @JoinColumn(name = "address_id", nullable = false, unique = true)
+  private Address address;
 
-    public Company(String name, Address address) {
-        this.name = name;
-        this.address = address;
-        this.createdAt = Instant.now();
-    }
+  public Company(String name,
+    Address address) {
+    this.name = name;
+    this.address = address;
+    this.createdAt = Instant.now();
+  }
 }

@@ -8,30 +8,30 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 public record EmployeeResponse(
-    UUID id,
-    String fullName,
-    String email,
-    String phoneNumber,
-    String documentNumber,
-    LocalDate birthDate,
-    AddressResponse address,
-    UUID companyId,
-    String employeeNumber,
-    String position,
-    String department,
-    LocalDate admissionDate,
-    LocalDate terminationDate,
-    EmployeeStatus status,
-    PaymentMethod paymentMethod,
-    BigDecimal paymentAmount
+  UUID id,
+  String fullName,
+  String email,
+  String phoneNumber,
+  String documentNumber,
+  LocalDate birthDate,
+  AddressResponse address,
+  UUID companyId,
+  String employeeNumber,
+  String position,
+  String department,
+  LocalDate admissionDate,
+  LocalDate terminationDate,
+  EmployeeStatus status,
+  PaymentMethod paymentMethod,
+  BigDecimal paymentAmount
 ) {
 
 
   public record AddressResponse(
-      String street,
-      String city,
-      String state,
-      String zipCode
+    String street,
+    String city,
+    String state,
+    String zipCode
   ) {
   }
 }

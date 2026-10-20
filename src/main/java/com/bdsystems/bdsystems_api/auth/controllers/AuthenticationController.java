@@ -19,19 +19,20 @@ public class AuthenticationController {
   private final AuthenticationService service;
 
   public AuthenticationController(
-      AuthenticationService service
+    AuthenticationService service
   ) {
     this.service = service;
   }
 
   @PostMapping("/register")
   public ResponseEntity<UserResponse> register(
-      @Valid @RequestBody UserRequest request
+    @Valid @RequestBody UserRequest request
   ) {
-    log.info("Received request to register user: {}", request);
+    log.info("Received request to register user: {}",
+      request);
     return ResponseEntity
-        .status(HttpStatus.CREATED)
-        .body(service.register(request));
+      .status(HttpStatus.CREATED)
+      .body(service.register(request));
   }
 
   @PostMapping("/login")

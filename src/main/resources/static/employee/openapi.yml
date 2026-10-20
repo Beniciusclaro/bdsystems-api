@@ -13,7 +13,7 @@ paths:
       description: Returns a paginated list of enabled employees for the authenticated company. All filters are optional and can be combined; when multiple filters are supplied, they are combined with AND. Empty position or department values are ignored. Position and department use case-insensitive partial matching.
       operationId: findAllEmployees
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
         - name: page
           in: query
@@ -88,7 +88,7 @@ paths:
       description: Creates an employee linked to the company identified by the authenticated JWT tenant_id claim.
       operationId: createEmployee
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -134,7 +134,7 @@ paths:
       description: Soft deletes the employee by setting its enable flag to true, if it belongs to the company identified by the authenticated JWT tenant_id claim.
       operationId: deleteEmployee
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
         - name: id
           in: path
@@ -159,7 +159,7 @@ paths:
       description: Replaces employee details for the employee identified by id, if it belongs to the company identified by the authenticated JWT tenant_id claim.
       operationId: updateEmployee
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
         - name: id
           in: path

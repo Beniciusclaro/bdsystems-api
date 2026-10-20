@@ -7,5 +7,6 @@ public record UnitOfMeasureResponse(
   String code,
   String name,
   String symbol,
-  boolean active) {
+  boolean active
+) {
 }

@@ -12,7 +12,7 @@ paths:
       summary: Register a new user
       description: Creates a user account for a company.
       operationId: register
-      security: []
+      security: [ ]
       requestBody:
         required: true
         content:
@@ -60,7 +60,7 @@ paths:
       summary: Logout user
       operationId: logout
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       responses:
         '204':
           description: Logout successful

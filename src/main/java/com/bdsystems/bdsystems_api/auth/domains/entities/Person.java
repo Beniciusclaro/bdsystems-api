@@ -40,17 +40,24 @@ public abstract class Person {
   @Column(name = "updated_at")
   private Date updatedAt;
 
-  protected Person(String fullName, String email, Address address) {
-    this(fullName, email, null, null, null, address);
+  protected Person(String fullName,
+    String email,
+    Address address) {
+    this(fullName,
+      email,
+      null,
+      null,
+      null,
+      address);
   }
 
   protected Person(
-      String fullName,
-      String email,
-      String phoneNumber,
-      String documentNumber,
-      LocalDate birthDate,
-      Address address
+    String fullName,
+    String email,
+    String phoneNumber,
+    String documentNumber,
+    LocalDate birthDate,
+    Address address
   ) {
     this.fullName = fullName;
     this.email = email;
@@ -62,11 +69,11 @@ public abstract class Person {
   }
 
   public void updatePersonalDetails(
-      String fullName,
-      String email,
-      String phoneNumber,
-      String documentNumber,
-      LocalDate birthDate
+    String fullName,
+    String email,
+    String phoneNumber,
+    String documentNumber,
+    LocalDate birthDate
   ) {
     this.fullName = fullName;
     this.email = email;

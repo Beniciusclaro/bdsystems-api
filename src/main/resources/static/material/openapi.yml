@@ -9,11 +9,11 @@ paths:
   /api/materials:
     post:
       tags:
-      - Materials
+        - Materials
       summary: Create material and suppliers atomically
       security:
-      - bearerAuth: []
-      parameters: []
+        - bearerAuth: [ ]
+      parameters: [ ]
       responses:
         '201':
           description: Success
@@ -39,44 +39,44 @@ paths:
               $ref: '#/components/schemas/MaterialRequest'
     get:
       tags:
-      - Materials
+        - Materials
       summary: List company materials
       security:
-      - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
-      - name: page
-        in: query
-        schema:
-          type: integer
-          minimum: 0
-          default: 0
-      - name: size
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          default: 20
-      - name: sort
-        in: query
-        schema:
-          type: string
-      - name: name
-        in: query
-        schema:
-          type: string
-      - name: code
-        in: query
-        schema:
-          type: string
-      - name: categoryId
-        in: query
-        schema:
-          type: string
-          format: uuid
-      - name: active
-        in: query
-        schema:
-          type: boolean
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 20
+        - name: sort
+          in: query
+          schema:
+            type: string
+        - name: name
+          in: query
+          schema:
+            type: string
+        - name: code
+          in: query
+          schema:
+            type: string
+        - name: categoryId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: active
+          in: query
+          schema:
+            type: boolean
       responses:
         '200':
           description: Success
@@ -97,17 +97,17 @@ paths:
   /api/materials/{id}:
     get:
       tags:
-      - Materials
+        - Materials
       summary: Get company material
       security:
-      - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         '200':
           description: Success
@@ -127,17 +127,17 @@ paths:
           description: Duplicate code, category name, or supplier association
     put:
       tags:
-      - Materials
+        - Materials
       summary: Update material; preserve omitted supplier associations
       security:
-      - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         '200':
           description: Success
@@ -164,17 +164,17 @@ paths:
   /api/materials/{id}/status:
     patch:
       tags:
-      - Materials
+        - Materials
       summary: Activate or deactivate material
       security:
-      - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         '204':
           description: Success
@@ -197,33 +197,33 @@ paths:
   /api/materials/{id}/suppliers:
     get:
       tags:
-      - Materials
+        - Materials
       summary: List material suppliers
       security:
-      - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: page
-        in: query
-        schema:
-          type: integer
-          minimum: 0
-          default: 0
-      - name: size
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          default: 20
-      - name: sort
-        in: query
-        schema:
-          type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 20
+        - name: sort
+          in: query
+          schema:
+            type: string
       responses:
         '200':
           description: Success
@@ -243,17 +243,17 @@ paths:
           description: Duplicate code, category name, or supplier association
     post:
       tags:
-      - Materials
+        - Materials
       summary: Add supplier to material
       security:
-      - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         '201':
           description: Success
@@ -280,23 +280,23 @@ paths:
   /api/materials/{id}/suppliers/{associationId}:
     put:
       tags:
-      - Materials
+        - Materials
       summary: Update supplier code and reference price; supplierId must remain unchanged
       security:
-      - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: associationId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: associationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         '200':
           description: Success
@@ -322,23 +322,23 @@ paths:
               $ref: '#/components/schemas/SupplierMaterialRequest'
     delete:
       tags:
-      - Materials
+        - Materials
       summary: Remove supplier association
       security:
-      - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: associationId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: associationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         '204':
           description: Success
@@ -355,11 +355,11 @@ paths:
   /api/material-categories:
     post:
       tags:
-      - Materials
+        - Materials
       summary: Create company category
       security:
-      - bearerAuth: []
-      parameters: []
+        - bearerAuth: [ ]
+      parameters: [ ]
       responses:
         '201':
           description: Success
@@ -385,31 +385,31 @@ paths:
               $ref: '#/components/schemas/MaterialCategoryRequest'
     get:
       tags:
-      - Materials
+        - Materials
       summary: List company categories
       security:
-      - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
-      - name: page
-        in: query
-        schema:
-          type: integer
-          minimum: 0
-          default: 0
-      - name: size
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          default: 20
-      - name: sort
-        in: query
-        schema:
-          type: string
-      - name: active
-        in: query
-        schema:
-          type: boolean
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 20
+        - name: sort
+          in: query
+          schema:
+            type: string
+        - name: active
+          in: query
+          schema:
+            type: boolean
       responses:
         '200':
           description: Success
@@ -430,17 +430,17 @@ paths:
   /api/material-categories/{id}:
     put:
       tags:
-      - Materials
+        - Materials
       summary: Update company category
       security:
-      - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         '200':
           description: Success
@@ -467,17 +467,17 @@ paths:
   /api/material-categories/{id}/status:
     patch:
       tags:
-      - Materials
+        - Materials
       summary: Activate or deactivate category
       security:
-      - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         '204':
           description: Success
@@ -500,32 +500,32 @@ paths:
   /api/units-of-measure:
     get:
       tags:
-      - Materials
+        - Materials
       summary: List shared units; active defaults to true
       security:
-      - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
-      - name: page
-        in: query
-        schema:
-          type: integer
-          minimum: 0
-          default: 0
-      - name: size
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          default: 20
-      - name: sort
-        in: query
-        schema:
-          type: string
-      - name: active
-        in: query
-        schema:
-          type: boolean
-          default: true
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 20
+        - name: sort
+          in: query
+          schema:
+            type: string
+        - name: active
+          in: query
+          schema:
+            type: boolean
+            default: true
       responses:
         '200':
           description: Success
@@ -566,7 +566,7 @@ components:
           multipleOf: 0.01
           nullable: true
       required:
-      - supplierId
+        - supplierId
     MaterialRequest:
       type: object
       properties:
@@ -595,9 +595,9 @@ components:
             associations are preserved. Use DELETE to remove an association. Duplicate
             supplier IDs return 400.
       required:
-      - code
-      - name
-      - unitOfMeasureId
+        - code
+        - name
+        - unitOfMeasureId
     MaterialCategoryRequest:
       type: object
       properties:
@@ -609,14 +609,14 @@ components:
         active:
           type: boolean
       required:
-      - name
+        - name
     StatusRequest:
       type: object
       properties:
         active:
           type: boolean
       required:
-      - active
+        - active
     UnitOfMeasureResponse:
       type: object
       properties:
@@ -631,7 +631,7 @@ components:
           type: string
         active:
           type: boolean
-      required: []
+      required: [ ]
     MaterialCategoryResponse:
       type: object
       properties:
@@ -647,7 +647,7 @@ components:
           type: string
         active:
           type: boolean
-      required: []
+      required: [ ]
     MaterialResponse:
       type: object
       properties:
@@ -677,7 +677,7 @@ components:
           type: string
           format: date-time
           nullable: true
-      required: []
+      required: [ ]
     SupplierMaterialResponse:
       type: object
       properties:
@@ -704,7 +704,7 @@ components:
           type: string
           format: date-time
           nullable: true
-      required: []
+      required: [ ]
     MaterialResponsePage:
       type: object
       properties:
@@ -723,7 +723,7 @@ components:
               type: integer
             totalPages:
               type: integer
-      required: []
+      required: [ ]
     MaterialCategoryResponsePage:
       type: object
       properties:
@@ -742,7 +742,7 @@ components:
               type: integer
             totalPages:
               type: integer
-      required: []
+      required: [ ]
     UnitOfMeasureResponsePage:
       type: object
       properties:
@@ -761,7 +761,7 @@ components:
               type: integer
             totalPages:
               type: integer
-      required: []
+      required: [ ]
     SupplierMaterialResponsePage:
       type: object
       properties:
@@ -780,7 +780,7 @@ components:
               type: integer
             totalPages:
               type: integer
-      required: []
+      required: [ ]
     ApiError:
       type: object
       properties:
@@ -791,4 +791,4 @@ components:
         field:
           type: string
           nullable: true
-      required: []
+      required: [ ]

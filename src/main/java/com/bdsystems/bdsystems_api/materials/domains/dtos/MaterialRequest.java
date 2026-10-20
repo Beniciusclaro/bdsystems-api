@@ -15,5 +15,6 @@ public record MaterialRequest(
   @NotNull UUID unitOfMeasureId,
   UUID categoryId,
   Boolean active,
-  List<@NotNull @Valid SupplierMaterialRequest> suppliers) {
+  List<@NotNull @Valid SupplierMaterialRequest> suppliers
+) {
 }

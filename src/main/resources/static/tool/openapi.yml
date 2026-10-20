@@ -13,7 +13,7 @@ paths:
       description: Returns a paginated list of tools belonging to the authenticated company. Optional filters select the active state and match code or name case-insensitively.
       operationId: findAllTools
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
         - name: page
           in: query
@@ -76,7 +76,7 @@ paths:
       description: Creates an active tool linked to the company identified by the authenticated JWT tenant_id claim.
       operationId: createTool
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -109,7 +109,7 @@ paths:
       description: Returns a tool if it belongs to the authenticated company.
       operationId: findToolById
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
         - name: id
           in: path
@@ -138,7 +138,7 @@ paths:
       description: Replaces the tool code and name if it belongs to the authenticated company.
       operationId: updateTool
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
         - name: id
           in: path
@@ -176,7 +176,7 @@ paths:
       description: Activates the tool if it belongs to the authenticated company.
       operationId: activateTool
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
         - name: id
           in: path
@@ -200,7 +200,7 @@ paths:
       description: Deactivates the tool without deleting it or its rental records.
       operationId: deactivateTool
       security:
-        - bearerAuth: []
+        - bearerAuth: [ ]
       parameters:
         - name: id
           in: path

@@ -13,5 +13,6 @@ public record MaterialResponse(
   MaterialCategoryResponse category,
   boolean active,
   OffsetDateTime createdAt,
-  OffsetDateTime updatedAt) {
+  OffsetDateTime updatedAt
+) {
 }

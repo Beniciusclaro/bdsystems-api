@@ -11,32 +11,32 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(EmailAlreadyRegisteredException.class)
   public ResponseEntity<ApiError> handleEmailAlreadyRegistered(
-      EmailAlreadyRegisteredException exception
+    EmailAlreadyRegisteredException exception
   ) {
     ApiError error = new ApiError(
-        HttpStatus.CONFLICT.value(),
-        exception.getMessage(),
-        "email"
+      HttpStatus.CONFLICT.value(),
+      exception.getMessage(),
+      "email"
     );
 
     return ResponseEntity
-        .status(HttpStatus.CONFLICT)
-        .body(error);
+      .status(HttpStatus.CONFLICT)
+      .body(error);
   }
 
   @ExceptionHandler(ResponseStatusException.class)
   public ResponseEntity<ApiError> handleResponseStatusException(
-        ResponseStatusException exception
+    ResponseStatusException exception
   ) {
     HttpStatus status = HttpStatus.valueOf(exception.getStatusCode().value());
     ApiError error = new ApiError(
-          status.value(),
-          exception.getReason(),
-          null
+      status.value(),
+      exception.getReason(),
+      null
     );
 
     return ResponseEntity
-          .status(status)
-          .body(error);
+      .status(status)
+      .body(error);
   }
 }

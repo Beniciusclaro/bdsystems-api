@@ -74,19 +74,19 @@ public class UserRegistrationService implements UserDetailsService {
 
   @Override
   public UserDetails loadUserByUsername(@NonNull String email)
-      throws UsernameNotFoundException {
+    throws UsernameNotFoundException {
 
     User user = userRepository.findByEmail(email)
-        .orElseThrow(() ->
-            new UsernameNotFoundException(
-                "User not found: " + email
-            )
-        );
+      .orElseThrow(() ->
+        new UsernameNotFoundException(
+          "User not found: " + email
+        )
+      );
 
     return org.springframework.security.core.userdetails.User
-        .withUsername(user.getEmail())
-        .password(user.getPassword())
-        .authorities("USER")
-        .build();
+      .withUsername(user.getEmail())
+      .password(user.getPassword())
+      .authorities("USER")
+      .build();
   }
 }

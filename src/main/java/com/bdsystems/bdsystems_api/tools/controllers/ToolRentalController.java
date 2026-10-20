@@ -26,70 +26,76 @@ import java.util.UUID;
 @RequestMapping("/api/tool-rentals")
 public class ToolRentalController {
 
-    private final ToolRentalService toolRentalService;
+  private final ToolRentalService toolRentalService;
 
-    public ToolRentalController(ToolRentalService toolRentalService) {
-        this.toolRentalService = toolRentalService;
-    }
+  public ToolRentalController(ToolRentalService toolRentalService) {
+    this.toolRentalService = toolRentalService;
+  }
 
-    @PostMapping
-    public ResponseEntity<ToolRentalResponse> create(
-            @Valid @RequestBody ToolRentalRequest request,
-            @AuthenticationPrincipal Jwt jwt
-    ) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(toolRentalService.create(request, companyIdFrom(jwt)));
-    }
+  @PostMapping
+  public ResponseEntity<ToolRentalResponse> create(
+    @Valid @RequestBody ToolRentalRequest request,
+    @AuthenticationPrincipal Jwt jwt
+  ) {
+    return ResponseEntity.status(HttpStatus.CREATED)
+      .body(toolRentalService.create(request,
+        companyIdFrom(jwt)));
+  }
 
-    @GetMapping
-    public Page<ToolRentalResponse> findAll(
-            Pageable pageable,
-            @AuthenticationPrincipal Jwt jwt
-    ) {
-        return toolRentalService.findAll(companyIdFrom(jwt), pageable);
-    }
+  @GetMapping
+  public Page<ToolRentalResponse> findAll(
+    Pageable pageable,
+    @AuthenticationPrincipal Jwt jwt
+  ) {
+    return toolRentalService.findAll(companyIdFrom(jwt),
+      pageable);
+  }
 
-    @GetMapping("/{id}")
-    public ToolRentalResponse findById(
-            @PathVariable UUID id,
-            @AuthenticationPrincipal Jwt jwt
-    ) {
-        return toolRentalService.findById(id, companyIdFrom(jwt));
-    }
+  @GetMapping("/{id}")
+  public ToolRentalResponse findById(
+    @PathVariable UUID id,
+    @AuthenticationPrincipal Jwt jwt
+  ) {
+    return toolRentalService.findById(id,
+      companyIdFrom(jwt));
+  }
 
-    @PutMapping("/{id}")
-    public ToolRentalResponse update(
-            @PathVariable UUID id,
-            @Valid @RequestBody ToolRentalRequest request,
-            @AuthenticationPrincipal Jwt jwt
-    ) {
-        return toolRentalService.update(id, request, companyIdFrom(jwt));
-    }
+  @PutMapping("/{id}")
+  public ToolRentalResponse update(
+    @PathVariable UUID id,
+    @Valid @RequestBody ToolRentalRequest request,
+    @AuthenticationPrincipal Jwt jwt
+  ) {
+    return toolRentalService.update(id,
+      request,
+      companyIdFrom(jwt));
+  }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(
-            @PathVariable UUID id,
-            @AuthenticationPrincipal Jwt jwt
-    ) {
-        toolRentalService.delete(id, companyIdFrom(jwt));
-        return ResponseEntity.noContent().build();
-    }
+  @DeleteMapping("/{id}")
+  public ResponseEntity<Void> delete(
+    @PathVariable UUID id,
+    @AuthenticationPrincipal Jwt jwt
+  ) {
+    toolRentalService.delete(id,
+      companyIdFrom(jwt));
+    return ResponseEntity.noContent().build();
+  }
 
-    private UUID companyIdFrom(Jwt jwt) {
-        String tenantIdClaim = jwt.getClaimAsString("tenant_id");
-        if (tenantIdClaim == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "JWT does not contain a valid tenant_id"
-            );
-        }
-        try {
-            return UUID.fromString(tenantIdClaim);
-        } catch (IllegalArgumentException exception) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "JWT does not contain a valid tenant_id"
-            );
-        }
+  private UUID companyIdFrom(Jwt jwt) {
+    String tenantIdClaim = jwt.getClaimAsString("tenant_id");
+    if (tenantIdClaim == null) {
+      throw new ResponseStatusException(
+        HttpStatus.FORBIDDEN,
+        "JWT does not contain a valid tenant_id"
+      );
     }
+    try {
+      return UUID.fromString(tenantIdClaim);
+    } catch (IllegalArgumentException exception) {
+      throw new ResponseStatusException(
+        HttpStatus.FORBIDDEN,
+        "JWT does not contain a valid tenant_id"
+      );
+    }
+  }
 }
