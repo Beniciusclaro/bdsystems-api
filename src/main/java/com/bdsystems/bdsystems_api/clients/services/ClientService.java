@@ -55,8 +55,9 @@ public class ClientService {
     Boolean active,
     String search,
     Pageable pageable) {
+    Boolean activeFilter = active == null ? Boolean.TRUE : active;
     return clients.search(tenantId,
-      active,
+      activeFilter,
       search == null ? "" : search,
       pageable).map(this::map);
   }
@@ -77,6 +78,14 @@ public class ClientService {
       client.getState(),
       client.getZipCode(),
       active);
+  }
+
+  @Transactional
+  public void delete(UUID id,
+    UUID tenantId) {
+    status(id,
+      tenantId,
+      false);
   }
 
   Client find(UUID id,

@@ -138,8 +138,9 @@ public class MaterialService {
     String name,
     String code,
     Pageable pageable) {
+    Boolean activeFilter = active == null ? Boolean.TRUE : active;
     return materials.findByFilters(companyId,
-        active,
+        activeFilter,
         categoryId,
         filter(name),
         filter(code),

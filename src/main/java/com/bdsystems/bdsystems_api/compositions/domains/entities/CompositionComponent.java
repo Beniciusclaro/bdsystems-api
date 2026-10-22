@@ -47,28 +47,50 @@ public class CompositionComponent {
   private int sortOrder;
 
   public CompositionComponent(ComponentType type,
-    Material m,
-    SupplierMaterial sm,
-    LaborRole lr,
-    ToolRental tr,
-    String desc,
-    String unit,
-    BigDecimal qty,
-    BigDecimal cost,
-    int order) {
-    this.type = type;
-    material = m;
-    supplierMaterial = sm;
-    laborRole = lr;
-    toolRental = tr;
-    description = desc;
-    unitLabel = unit;
-    quantity = qty;
-    customUnitCost = cost;
-    sortOrder = order;
+    Material material,
+    SupplierMaterial supplierMaterial,
+    LaborRole laborRole,
+    ToolRental toolRental,
+    String description,
+    String unitLabel,
+    BigDecimal quantity,
+    BigDecimal customUnitCost,
+    int sortOrder) {
+    update(type,
+      material,
+      supplierMaterial,
+      laborRole,
+      toolRental,
+      description,
+      unitLabel,
+      quantity,
+      customUnitCost,
+      sortOrder);
   }
 
-  void attach(Composition c) {
-    composition = c;
+  public void update(ComponentType type,
+    Material material,
+    SupplierMaterial supplierMaterial,
+    LaborRole laborRole,
+    ToolRental toolRental,
+    String description,
+    String unitLabel,
+    BigDecimal quantity,
+    BigDecimal customUnitCost,
+    int sortOrder) {
+    this.type = type;
+    this.material = material;
+    this.supplierMaterial = supplierMaterial;
+    this.laborRole = laborRole;
+    this.toolRental = toolRental;
+    this.description = description;
+    this.unitLabel = unitLabel;
+    this.quantity = quantity;
+    this.customUnitCost = customUnitCost;
+    this.sortOrder = sortOrder;
+  }
+
+  void attach(Composition composition) {
+    this.composition = composition;
   }
 }

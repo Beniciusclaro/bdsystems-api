@@ -72,8 +72,12 @@ public class SupplierService {
 
   @Transactional
   public Page<SupplierResponse> findAll(UUID companyId,
+    String name,
+    String taxNumber,
     Pageable pageable) {
-    return supplierRepository.findByCompanyIdAndActiveTrue(companyId,
+    return supplierRepository.findByFilters(companyId,
+        normalizeFilter(name),
+        normalizeFilter(taxNumber),
         pageable)
       .map(this::toResponse);
   }
@@ -159,5 +163,9 @@ public class SupplierService {
       supplier.getCompany().getId(),
       supplier.isActive()
     );
+  }
+
+  private String normalizeFilter(String value) {
+    return value == null ? "" : value.trim();
   }
 }

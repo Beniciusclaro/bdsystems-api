@@ -81,10 +81,20 @@ paths:
     $ref: './planning/openapi.yml#/paths/~1api~1compositions'
   /api/compositions/{id}:
     $ref: './planning/openapi.yml#/paths/~1api~1compositions~1{id}'
+  /api/compositions/{compositionId}/components/{componentId}:
+    $ref: './planning/openapi.yml#/paths/~1api~1compositions~1{compositionId}~1components~1{componentId}'
   /api/budgets:
     $ref: './planning/openapi.yml#/paths/~1api~1budgets'
   /api/budgets/{id}:
     $ref: './planning/openapi.yml#/paths/~1api~1budgets~1{id}'
+  /api/budgets/{id}/finalize:
+    $ref: './planning/openapi.yml#/paths/~1api~1budgets~1{id}~1finalize'
+  /api/budgets/{id}/approve-and-create-project:
+    $ref: './planning/openapi.yml#/paths/~1api~1budgets~1{id}~1approve-and-create-project'
+  /api/budgets/{id}/reject:
+    $ref: './planning/openapi.yml#/paths/~1api~1budgets~1{id}~1reject'
+  /api/budgets/{id}/duplicate:
+    $ref: './planning/openapi.yml#/paths/~1api~1budgets~1{id}~1duplicate'
 
 components:
   securitySchemes:

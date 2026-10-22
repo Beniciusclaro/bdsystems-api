@@ -16,9 +16,15 @@ paths:
     parameters: [ { $ref: '#/components/parameters/Id' } ]
     get: { tags: [ Planning ], summary: Get client, responses: { '200': { description: Client } } }
     put: { tags: [ Planning ], summary: Update client, requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ClientRequest' } } } }, responses: { '200': { description: Client updated } } }
+    delete: { tags: [ Planning ], summary: Deactivate client, responses: { '204': { description: Client deactivated }, '404': { description: Client not found } } }
   /api/projects:
     get: { tags: [ Planning ], summary: List projects, responses: { '200': { description: Project page } } }
-    post: { tags: [ Planning ], summary: Create project, responses: { '201': { description: Project created } } }
+    post:
+      tags: [ Planning ]
+      summary: Create project directly (legacy compatibility)
+      deprecated: true
+      description: Prefer approving a finalized budget through /api/budgets/{id}/approve-and-create-project.
+      responses: { '201': { description: Project created } }
   /api/projects/{id}:
     parameters: [ { $ref: '#/components/parameters/Id' } ]
     get: { tags: [ Planning ], summary: Get project, responses: { '200': { description: Project } } }
@@ -33,19 +39,105 @@ paths:
     parameters: [ { $ref: '#/components/parameters/Id' } ]
     get: { tags: [ Planning ], summary: Get live calculated composition, responses: { '200': { description: Composition } } }
     put: { tags: [ Planning ], summary: Replace composition details and components, responses: { '200': { description: Composition updated } } }
+  /api/compositions/{compositionId}/components/{componentId}:
+    parameters:
+      - { name: compositionId, in: path, required: true, schema: { type: string, format: uuid } }
+      - { name: componentId, in: path, required: true, schema: { type: string, format: uuid } }
+    put:
+      tags: [ Planning ]
+      summary: Update one composition component
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CompositionComponentRequest' } } } }
+      responses:
+        '200': { description: Component updated and composition recalculated }
+        '404': { description: Composition or component not found }
+    delete:
+      tags: [ Planning ]
+      summary: Delete one composition component
+      responses:
+        '204': { description: Component deleted }
+        '404': { description: Composition or component not found }
   /api/budgets:
     get: { tags: [ Planning ], summary: List budgets, responses: { '200': { description: Budget page } } }
-    post: { tags: [ Planning ], summary: Create budget draft, responses: { '201': { description: Budget created } } }
+    post:
+      tags: [ Planning ]
+      summary: Create budget draft without a project
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/BudgetRequest' } } } }
+      responses: { '201': { description: Budget created }, '400': { description: Invalid request }, '404': { description: Client not found in tenant }, '409': { description: Duplicate number } }
   /api/budgets/{id}:
     parameters: [ { $ref: '#/components/parameters/Id' } ]
     get: { tags: [ Planning ], summary: Get budget with stages and services, responses: { '200': { description: Budget } } }
-    put: { tags: [ Planning ], summary: Update budget commercial data, responses: { '200': { description: Budget updated } } }
+    put:
+      tags: [ Planning ]
+      summary: Update draft budget commercial data
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/BudgetRequest' } } } }
+      responses: { '200': { description: Budget updated }, '409': { description: Budget is immutable } }
+  /api/budgets/{id}/finalize:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    post: { tags: [ Planning ], summary: Finalize a budget without creating a project, responses: { '200': { description: Budget finalized }, '409': { description: Invalid transition }, '422': { description: Budget has no services } } }
+  /api/budgets/{id}/approve-and-create-project:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    post:
+      tags: [ Planning ]
+      summary: Approve a finalized budget and atomically create its project
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/BudgetApprovalRequest' } } } }
+      responses: { '200': { description: Approved budget and linked project }, '400': { description: Invalid request }, '404': { description: Budget not found in tenant }, '409': { description: Invalid transition, duplicate generation, or duplicate project code }, '422': { description: Incompatible budget data } }
+  /api/budgets/{id}/reject:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    post: { tags: [ Planning ], summary: Reject a finalized budget, responses: { '200': { description: Budget rejected }, '409': { description: Invalid transition } } }
+  /api/budgets/{id}/duplicate:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    post: { tags: [ Planning ], summary: Duplicate any budget as a new draft, responses: { '200': { description: Draft copy }, '400': { description: New number is required }, '409': { description: Duplicate number } } }
 components:
   securitySchemes:
     bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
   parameters:
     Id: { name: id, in: path, required: true, schema: { type: string, format: uuid } }
   schemas:
+    BudgetRequest:
+      type: object
+      required: [ clientId, number, title, taxPercent, marginPercent, proposedProjectName ]
+      properties:
+        clientId: { type: string, format: uuid }
+        number: { type: string, maxLength: 50 }
+        title: { type: string, maxLength: 180 }
+        validUntil: { type: string, format: date }
+        commercialTerms: { type: string }
+        notes: { type: string }
+        taxPercent: { type: number, minimum: 0 }
+        marginPercent: { type: number, minimum: 0 }
+        proposedProjectName: { type: string, maxLength: 180 }
+        proposedProjectDescription: { type: string }
+        proposedProjectStreet: { type: string, maxLength: 180 }
+        proposedProjectCity: { type: string, maxLength: 100 }
+        proposedProjectState: { type: string, maxLength: 100 }
+        proposedProjectZipCode: { type: string, maxLength: 20 }
+    BudgetApprovalRequest:
+      type: object
+      required: [ code, name ]
+      properties:
+        code: { type: string, maxLength: 50 }
+        name: { type: string, maxLength: 180 }
+        description: { type: string }
+        street: { type: string, maxLength: 180 }
+        city: { type: string, maxLength: 100 }
+        state: { type: string, maxLength: 100 }
+        zipCode: { type: string, maxLength: 20 }
+        plannedStartDate: { type: string, format: date }
+        plannedEndDate: { type: string, format: date }
+    CompositionComponentRequest:
+      type: object
+      required: [ type, quantity ]
+      properties:
+        type: { type: string, enum: [ MATERIAL, LABOR, EQUIPMENT, CUSTOM ] }
+        materialId: { type: string, format: uuid }
+        supplierMaterialId: { type: string, format: uuid }
+        laborRoleId: { type: string, format: uuid }
+        toolRentalId: { type: string, format: uuid }
+        description: { type: string, maxLength: 220 }
+        unitLabel: { type: string, maxLength: 30 }
+        quantity: { type: number, exclusiveMinimum: 0 }
+        unitCost: { type: number, minimum: 0 }
+        sortOrder: { type: integer }
     ClientRequest:
       type: object
       required: [ type, name ]

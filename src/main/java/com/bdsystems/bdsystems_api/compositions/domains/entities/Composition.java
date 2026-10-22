@@ -41,30 +41,34 @@ public class Composition {
   @Column(name = "updated_at")
   private OffsetDateTime updatedAt;
 
-  public Composition(Company c) {
-    company = c;
+  public Composition(Company company) {
+    this.company = company;
   }
 
   public void update(String code,
     String name,
-    String desc,
-    UnitOfMeasure unit,
-    BigDecimal yield,
+    String description,
+    UnitOfMeasure unitOfMeasure,
+    BigDecimal baseYield,
     boolean active) {
     this.code = code;
     this.name = name;
-    description = desc;
-    unitOfMeasure = unit;
-    baseYield = yield;
+    this.description = description;
+    this.unitOfMeasure = unitOfMeasure;
+    this.baseYield = baseYield;
     this.active = active;
   }
 
   public void replaceComponents(List<CompositionComponent> values) {
     components.clear();
-    values.forEach(v -> {
-      v.attach(this);
-      components.add(v);
+    values.forEach(compositionComponent -> {
+      compositionComponent.attach(this);
+      components.add(compositionComponent);
     });
+  }
+
+  public boolean removeComponent(UUID componentId) {
+    return components.removeIf(compositionComponent -> compositionComponent.getId().equals(componentId));
   }
 
   @PrePersist

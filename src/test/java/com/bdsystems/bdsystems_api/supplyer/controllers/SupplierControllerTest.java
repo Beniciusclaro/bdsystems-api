@@ -4,6 +4,8 @@ import com.bdsystems.bdsystems_api.auth.domains.entities.Address;
 import com.bdsystems.bdsystems_api.auth.domains.entities.Company;
 import com.bdsystems.bdsystems_api.auth.repositories.AddressRepository;
 import com.bdsystems.bdsystems_api.auth.repositories.CompanyRepository;
+import com.bdsystems.bdsystems_api.supplyer.domains.entities.Supplier;
+import com.bdsystems.bdsystems_api.supplyer.repositories.SupplierRepository;
 
 import java.time.Instant;
 
@@ -40,6 +42,9 @@ class SupplierControllerTest {
 
   @Autowired
   private CompanyRepository companyRepository;
+
+  @Autowired
+  private SupplierRepository supplierRepository;
 
   @Autowired
   private JwtEncoder jwtEncoder;
@@ -190,6 +195,57 @@ class SupplierControllerTest {
   }
 
   @Test
+  void filtersSuppliersByNameAndTaxNumber() throws Exception {
+    Company company = createCompany("Supplier Filter Company");
+    String token = tokenFor(company);
+    createSupplier(company,
+      "Alpha Construction Materials Ltd",
+      "Alpha Store",
+      "PT111222333");
+    createSupplier(company,
+      "Beta Industrial Supplies Ltd",
+      "Central Depot",
+      "PT999888777");
+
+    mockMvc.perform(get("/api/suppliers")
+        .param("name",
+          "alpha")
+        .header("Authorization",
+          "Bearer " + token))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.page.totalElements").value(1))
+      .andExpect(jsonPath("$.content[0].legalName").value("Alpha Construction Materials Ltd"));
+
+    mockMvc.perform(get("/api/suppliers")
+        .param("name",
+          "central")
+        .header("Authorization",
+          "Bearer " + token))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.page.totalElements").value(1))
+      .andExpect(jsonPath("$.content[0].tradeName").value("Central Depot"));
+
+    mockMvc.perform(get("/api/suppliers")
+        .param("taxNumber",
+          "888")
+        .header("Authorization",
+          "Bearer " + token))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.page.totalElements").value(1))
+      .andExpect(jsonPath("$.content[0].taxNumber").value("PT999888777"));
+
+    mockMvc.perform(get("/api/suppliers")
+        .param("name",
+          "alpha")
+        .param("taxNumber",
+          "999")
+        .header("Authorization",
+          "Bearer " + token))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.page.totalElements").value(0));
+  }
+
+  @Test
   void servesSupplierOpenApiDocumentWithoutAuthentication() throws Exception {
     mockMvc.perform(get("/supplier/openapi.yml"))
       .andExpect(status().isOk())
@@ -204,6 +260,23 @@ class SupplierControllerTest {
         "1000-001")
     );
     return companyRepository.save(new Company(name,
+      address));
+  }
+
+  private void createSupplier(Company company,
+    String legalName,
+    String tradeName,
+    String taxNumber) {
+    Address address = addressRepository.save(new Address(legalName + " Street",
+      "Lisbon",
+      "Lisbon",
+      "1000-010"));
+    supplierRepository.save(new Supplier(company,
+      legalName,
+      tradeName,
+      taxNumber,
+      null,
+      null,
       address));
   }
 

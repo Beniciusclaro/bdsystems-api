@@ -59,8 +59,9 @@ public class ToolService {
     String query
   ) {
     String normalizedQuery = query == null || query.isBlank() ? "" : query.trim();
+    Boolean activeFilter = active == null ? Boolean.TRUE : active;
     return toolRepository.findByFilters(companyId,
-        active,
+        activeFilter,
         normalizedQuery,
         pageable)
       .map(this::toResponse);

@@ -11,7 +11,9 @@ Read this file before changing the project.
 
 ## Formatting
 
-- After creating or modifying source files, always run the IntelliJ formatter using `.idea/codeStyles/Project.xml`.
+- After creating or modifying Java source files, always run the IntelliJ formatter using `.idea/codeStyles/Project.xml`.
+- Limit the formatter to `*.java` files under `src/main/java` and `src/test/java`.
+- Never run the IntelliJ formatter over `src/main/resources`, especially Flyway migrations. Applied migrations are immutable and must not be reformatted or edited.
 - Format all affected Java production and test classes before running verification.
 - Treat formatting as a required implementation step, not an optional cleanup.
 

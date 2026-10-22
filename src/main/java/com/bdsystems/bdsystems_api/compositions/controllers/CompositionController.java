@@ -15,53 +15,74 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/compositions")
 public class CompositionController {
-  private final CompositionService s;
+  private final CompositionService compositionService;
 
-  public CompositionController(CompositionService s) {
-    this.s = s;
+  public CompositionController(CompositionService compositionService) {
+    this.compositionService = compositionService;
   }
 
   @PostMapping
-  ResponseEntity<Response> create(@Valid @RequestBody Request r,
-    @AuthenticationPrincipal Jwt j) {
-    return ResponseEntity.status(HttpStatus.CREATED).body(s.create(r,
-      TenantIds.from(j)));
+  ResponseEntity<Response> create(@Valid @RequestBody Request request,
+    @AuthenticationPrincipal Jwt jwt) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(compositionService.create(request,
+      TenantIds.from(jwt)));
   }
 
   @GetMapping
   Page<Response> list(@RequestParam(required = false) Boolean active,
     @RequestParam(required = false) String search,
-    Pageable p,
-    @AuthenticationPrincipal Jwt j) {
-    return s.list(TenantIds.from(j),
+    Pageable pageable,
+    @AuthenticationPrincipal Jwt jwt) {
+    return compositionService.list(TenantIds.from(jwt),
       active,
       search,
-      p);
+      pageable);
   }
 
   @GetMapping("/{id}")
   Response get(@PathVariable UUID id,
-    @AuthenticationPrincipal Jwt j) {
-    return s.get(id,
-      TenantIds.from(j));
+    @AuthenticationPrincipal Jwt jwt) {
+    return compositionService.get(id,
+      TenantIds.from(jwt));
   }
 
   @PutMapping("/{id}")
   Response update(@PathVariable UUID id,
-    @Valid @RequestBody Request r,
-    @AuthenticationPrincipal Jwt j) {
-    return s.update(id,
-      r,
-      TenantIds.from(j));
+    @Valid @RequestBody Request request,
+    @AuthenticationPrincipal Jwt jwt) {
+    return compositionService.update(id,
+      request,
+      TenantIds.from(jwt));
+  }
+
+  @PutMapping("/{compositionId}/components/{componentId}")
+  Response updateComponent(@PathVariable UUID compositionId,
+    @PathVariable UUID componentId,
+    @Valid @RequestBody ComponentRequest request,
+    @AuthenticationPrincipal Jwt jwt) {
+    return compositionService.updateComponent(compositionId,
+      componentId,
+      request,
+      TenantIds.from(jwt));
+  }
+
+  @DeleteMapping("/{compositionId}/components/{componentId}")
+  ResponseEntity<Void> deleteComponent(@PathVariable UUID compositionId,
+    @PathVariable UUID componentId,
+    @AuthenticationPrincipal Jwt jwt) {
+    compositionService.deleteComponent(compositionId,
+      componentId,
+      TenantIds.from(jwt));
+    return ResponseEntity.noContent().build();
   }
 
   @PatchMapping("/{id}/status")
   ResponseEntity<Void> status(@PathVariable UUID id,
-    @RequestBody Status r,
-    @AuthenticationPrincipal Jwt j) {
-    s.status(id,
-      TenantIds.from(j),
-      r.active());
+    @RequestBody Status request,
+    @AuthenticationPrincipal Jwt jwt) {
+    compositionService.status(id,
+      TenantIds.from(jwt),
+      request.active());
     return ResponseEntity.noContent().build();
   }
 

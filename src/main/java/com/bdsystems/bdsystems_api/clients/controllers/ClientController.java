@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,21 +34,21 @@ public class ClientController {
   }
 
   @PostMapping
-  ResponseEntity<Response> create(@Valid @RequestBody Request r,
+  ResponseEntity<Response> create(@Valid @RequestBody Request request,
     @AuthenticationPrincipal Jwt jwt) {
-    return ResponseEntity.status(HttpStatus.CREATED).body(service.create(r,
+    return ResponseEntity.status(HttpStatus.CREATED).body(service.create(request,
       TenantIds.from(jwt)));
   }
 
   @GetMapping
   Page<Response> list(@RequestParam(required = false) Boolean active,
     @RequestParam(required = false) String search,
-    Pageable p,
+    Pageable pageable,
     @AuthenticationPrincipal Jwt jwt) {
     return service.list(TenantIds.from(jwt),
       active,
       search,
-      p);
+      pageable);
   }
 
   @GetMapping("/{id}")
@@ -59,20 +60,28 @@ public class ClientController {
 
   @PutMapping("/{id}")
   Response update(@PathVariable UUID id,
-    @Valid @RequestBody Request r,
+    @Valid @RequestBody Request request,
     @AuthenticationPrincipal Jwt jwt) {
     return service.update(id,
-      r,
+      request,
       TenantIds.from(jwt));
+  }
+
+  @DeleteMapping("/{id}")
+  ResponseEntity<Void> delete(@PathVariable UUID id,
+    @AuthenticationPrincipal Jwt jwt) {
+    service.delete(id,
+      TenantIds.from(jwt));
+    return ResponseEntity.noContent().build();
   }
 
   @PatchMapping("/{id}/status")
   ResponseEntity<Void> status(@PathVariable UUID id,
-    @RequestBody Status r,
+    @RequestBody Status status,
     @AuthenticationPrincipal Jwt jwt) {
     service.status(id,
       TenantIds.from(jwt),
-      r.active());
+      status.active());
     return ResponseEntity.noContent().build();
   }
 
