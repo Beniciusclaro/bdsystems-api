@@ -69,6 +69,33 @@ public class Project {
     this.company = company;
   }
 
+  public static Project planning(Company company,
+    Client client,
+    String code,
+    String name,
+    String description,
+    String street,
+    String city,
+    String state,
+    String zipCode,
+    LocalDate plannedStartDate,
+    LocalDate plannedEndDate) {
+    Project project = new Project(company);
+    project.update(client,
+      code,
+      name,
+      description,
+      street,
+      city,
+      state,
+      zipCode,
+      plannedStartDate,
+      plannedEndDate,
+      ProjectStatus.PLANNING,
+      true);
+    return project;
+  }
+
   public void update(Client client,
     String code,
     String name,

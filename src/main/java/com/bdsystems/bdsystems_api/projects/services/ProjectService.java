@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.UUID;
+import java.time.LocalDate;
 
 @Service
 public class ProjectService {
@@ -38,6 +39,38 @@ public class ProjectService {
         "Authenticated company not found"))),
       request,
       tenantId);
+  }
+
+  @Transactional
+  public Project createFromBudget(Client client,
+    String code,
+    String name,
+    String description,
+    String street,
+    String city,
+    String state,
+    String zipCode,
+    LocalDate plannedStartDate,
+    LocalDate plannedEndDate,
+    UUID tenantId) {
+    validateDates(plannedStartDate,
+      plannedEndDate);
+    validateUniqueCode(code,
+      tenantId,
+      null);
+    Project project = Project.planning(companies.findById(tenantId).orElseThrow(() -> error(HttpStatus.FORBIDDEN,
+        "Authenticated company not found")),
+      client,
+      code.trim(),
+      name.trim(),
+      description,
+      street,
+      city,
+      state,
+      zipCode,
+      plannedStartDate,
+      plannedEndDate);
+    return projects.save(project);
   }
 
   @Transactional
@@ -73,14 +106,11 @@ public class ProjectService {
   private Response save(Project project,
     Request request,
     UUID tenantId) {
-    if (request.plannedStartDate() != null && request.plannedEndDate() != null && request.plannedEndDate().isBefore(request.plannedStartDate()))
-      throw error(HttpStatus.BAD_REQUEST,
-        "Planned end date cannot be before start date");
-    if (projects.existsByCompanyIdAndCodeAndIdNot(tenantId,
-      request.code().trim(),
-      project.getId() == null ? new UUID(0,
-        0) : project.getId())) throw error(HttpStatus.CONFLICT,
-      "Project code already registered");
+    validateDates(request.plannedStartDate(),
+      request.plannedEndDate());
+    validateUniqueCode(request.code(),
+      tenantId,
+      project.getId());
     Client client = clients.findByIdAndCompanyId(request.clientId(),
       tenantId).orElseThrow(() -> error(HttpStatus.NOT_FOUND,
       "Client not found"));
@@ -106,7 +136,7 @@ public class ProjectService {
       "Project not found"));
   }
 
-  private Response map(Project project) {
+  public Response map(Project project) {
     return new Response(project.getId(),
       project.getClient().getId(),
       project.getClient().getName(),
@@ -123,6 +153,24 @@ public class ProjectService {
       project.isActive(),
       project.getCreatedAt(),
       project.getUpdatedAt());
+  }
+
+  private void validateDates(LocalDate plannedStartDate,
+    LocalDate plannedEndDate) {
+    if (plannedStartDate != null && plannedEndDate != null && plannedEndDate.isBefore(plannedStartDate))
+      throw error(HttpStatus.BAD_REQUEST,
+        "Planned end date cannot be before start date");
+  }
+
+  private void validateUniqueCode(String code,
+    UUID tenantId,
+    UUID projectId) {
+    UUID excludedProjectId = projectId == null ? new UUID(0,
+      0) : projectId;
+    if (projects.existsByCompanyIdAndCodeAndIdNot(tenantId,
+      code.trim(),
+      excludedProjectId)) throw error(HttpStatus.CONFLICT,
+      "Project code already registered");
   }
 
   private ResponseStatusException error(HttpStatus status,

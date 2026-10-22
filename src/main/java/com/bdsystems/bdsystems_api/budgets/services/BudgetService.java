@@ -2,6 +2,8 @@ package com.bdsystems.bdsystems_api.budgets.services;
 
 import com.bdsystems.bdsystems_api.auth.repositories.CompanyRepository;
 import com.bdsystems.bdsystems_api.budgets.domains.dtos.BudgetDtos.ComponentResponse;
+import com.bdsystems.bdsystems_api.budgets.domains.dtos.BudgetDtos.ApprovalRequest;
+import com.bdsystems.bdsystems_api.budgets.domains.dtos.BudgetDtos.ApprovalResponse;
 import com.bdsystems.bdsystems_api.budgets.domains.dtos.BudgetDtos.ItemRequest;
 import com.bdsystems.bdsystems_api.budgets.domains.dtos.BudgetDtos.ItemResponse;
 import com.bdsystems.bdsystems_api.budgets.domains.dtos.BudgetDtos.Proposal;
@@ -17,6 +19,7 @@ import com.bdsystems.bdsystems_api.budgets.domains.entities.BudgetItem;
 import com.bdsystems.bdsystems_api.budgets.domains.entities.BudgetItemComponent;
 import com.bdsystems.bdsystems_api.budgets.domains.entities.BudgetStage;
 import com.bdsystems.bdsystems_api.budgets.domains.entities.BudgetStatus;
+import com.bdsystems.bdsystems_api.budgets.domains.entities.ProjectLinkOrigin;
 import com.bdsystems.bdsystems_api.budgets.repositories.BudgetItemRepository;
 import com.bdsystems.bdsystems_api.budgets.repositories.BudgetRepository;
 import com.bdsystems.bdsystems_api.budgets.repositories.BudgetStageRepository;
@@ -27,6 +30,7 @@ import com.bdsystems.bdsystems_api.compositions.domains.entities.Composition;
 import com.bdsystems.bdsystems_api.compositions.services.CompositionService;
 import com.bdsystems.bdsystems_api.projects.domains.entities.Project;
 import com.bdsystems.bdsystems_api.projects.repositories.ProjectRepository;
+import com.bdsystems.bdsystems_api.projects.services.ProjectService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -49,6 +53,7 @@ public class BudgetService {
   private final ProjectRepository projects;
   private final CompanyRepository companies;
   private final CompositionService compositions;
+  private final ProjectService projectService;
 
   public BudgetService(BudgetRepository b,
     BudgetStageRepository s,
@@ -56,7 +61,8 @@ public class BudgetService {
     ClientRepository c,
     ProjectRepository p,
     CompanyRepository co,
-    CompositionService cs) {
+    CompositionService cs,
+    ProjectService projectService) {
     budgets = b;
     stages = s;
     items = i;
@@ -64,6 +70,7 @@ public class BudgetService {
     projects = p;
     companies = co;
     compositions = cs;
+    this.projectService = projectService;
   }
 
   @Transactional
@@ -99,8 +106,8 @@ public class BudgetService {
     UUID t) {
     Budget b = find(id,
       t);
-    String client = b.getStatus() == BudgetStatus.FINALIZED ? b.getClientNameSnapshot() : b.getClient().getName();
-    String project = b.getStatus() == BudgetStatus.FINALIZED ? b.getProjectNameSnapshot() : b.getProject().getName();
+    String client = b.getStatus() == BudgetStatus.DRAFT ? b.getClient().getName() : b.getClientNameSnapshot();
+    String project = b.getStatus() == BudgetStatus.DRAFT ? b.getProposedProjectName() : b.getProjectNameSnapshot();
     List<ProposalStage> result = b.getStages().stream().map(s -> new ProposalStage(s.getName(),
       s.getDescription(),
       s.getItems().stream().map(BudgetItem::getTotalSalePrice).reduce(BigDecimal.ZERO,
@@ -278,6 +285,52 @@ public class BudgetService {
   }
 
   @Transactional
+  public ApprovalResponse approveAndCreateProject(UUID id,
+    ApprovalRequest request,
+    UUID tenantId) {
+    Budget budget = find(id,
+      tenantId);
+    requireFinalized(budget);
+    Project project;
+    ProjectLinkOrigin linkOrigin;
+    if (budget.getProject() != null && budget.getProjectLinkOrigin() == ProjectLinkOrigin.LEGACY) {
+      project = projects.findByIdAndCompanyId(budget.getProject().getId(),
+        tenantId).orElseThrow(() -> error(HttpStatus.NOT_FOUND,
+        "Project not found"));
+      linkOrigin = ProjectLinkOrigin.LEGACY;
+    } else {
+      if (budget.getProject() != null) throw error(HttpStatus.CONFLICT,
+        "Budget already has a generated project");
+      project = projectService.createFromBudget(budget.getClient(),
+        request.code(),
+        request.name(),
+        request.description(),
+        request.street(),
+        request.city(),
+        request.state(),
+        request.zipCode(),
+        request.plannedStartDate(),
+        request.plannedEndDate(),
+        tenantId);
+      linkOrigin = ProjectLinkOrigin.GENERATED;
+    }
+    budget.approve(project,
+      linkOrigin);
+    return new ApprovalResponse(map(budget),
+      projectService.map(project));
+  }
+
+  @Transactional
+  public Response reject(UUID id,
+    UUID tenantId) {
+    Budget budget = find(id,
+      tenantId);
+    requireFinalized(budget);
+    budget.reject();
+    return map(budget);
+  }
+
+  @Transactional
   public Response duplicate(UUID id,
     String newNumber,
     UUID t) {
@@ -286,14 +339,19 @@ public class BudgetService {
     if (newNumber == null || newNumber.isBlank()) throw error(HttpStatus.BAD_REQUEST,
       "New budget number is required");
     Request r = new Request(source.getClient().getId(),
-      source.getProject().getId(),
       newNumber,
       source.getTitle() + " - revisão",
       source.getValidUntil(),
       source.getCommercialTerms(),
       source.getNotes(),
       source.getTaxPercent(),
-      source.getMarginPercent());
+      source.getMarginPercent(),
+      source.getProposedProjectName(),
+      source.getProposedProjectDescription(),
+      source.getProposedProjectStreet(),
+      source.getProposedProjectCity(),
+      source.getProposedProjectState(),
+      source.getProposedProjectZipCode());
     Budget copy = new Budget(companies.findById(t).orElseThrow());
     apply(copy,
       r,
@@ -351,20 +409,20 @@ public class BudgetService {
     Client c = clients.findByIdAndCompanyId(r.clientId(),
       t).orElseThrow(() -> error(HttpStatus.NOT_FOUND,
       "Client not found"));
-    Project p = projects.findByIdAndCompanyId(r.projectId(),
-      t).orElseThrow(() -> error(HttpStatus.NOT_FOUND,
-      "Project not found"));
-    if (!p.getClient().getId().equals(c.getId())) throw error(HttpStatus.BAD_REQUEST,
-      "Project does not belong to selected client");
     b.update(c,
-      p,
       r.number().trim(),
       r.title().trim(),
       r.validUntil(),
       r.commercialTerms(),
       r.notes(),
       r.taxPercent(),
-      r.marginPercent());
+      r.marginPercent(),
+      r.proposedProjectName().trim(),
+      r.proposedProjectDescription(),
+      r.proposedProjectStreet(),
+      r.proposedProjectCity(),
+      r.proposedProjectState(),
+      r.proposedProjectZipCode());
   }
 
   private List<BudgetItemComponent> snapshot(CompositionDtos.Response r) {
@@ -417,7 +475,12 @@ public class BudgetService {
 
   private void editable(Budget b) {
     if (b.getStatus() != BudgetStatus.DRAFT) throw error(HttpStatus.CONFLICT,
-      "Finalized budget is immutable");
+      "Only draft budgets can be changed");
+  }
+
+  private void requireFinalized(Budget budget) {
+    if (budget.getStatus() != BudgetStatus.FINALIZED) throw error(HttpStatus.CONFLICT,
+      "Only finalized budgets can be approved or rejected");
   }
 
   private Response map(Budget b) {
@@ -456,15 +519,22 @@ public class BudgetService {
       BigDecimal::add);
     BigDecimal sale = ss.stream().map(StageResponse::totalSalePrice).reduce(BigDecimal.ZERO,
       BigDecimal::add);
-    String clientName = b.getStatus() == BudgetStatus.FINALIZED ? b.getClientNameSnapshot() : b.getClient().getName();
-    String projectName = b.getStatus() == BudgetStatus.FINALIZED ? b.getProjectNameSnapshot() : b.getProject().getName();
+    String clientName = b.getStatus() == BudgetStatus.DRAFT ? b.getClient().getName() : b.getClientNameSnapshot();
+    String projectName = b.getProject() == null ? null : b.getProject().getName();
     return new Response(b.getId(),
       b.getNumber(),
       b.getTitle(),
       b.getClient().getId(),
       clientName,
-      b.getProject().getId(),
+      b.getProject() == null ? null : b.getProject().getId(),
       projectName,
+      b.getProposedProjectName(),
+      b.getProposedProjectDescription(),
+      b.getProposedProjectStreet(),
+      b.getProposedProjectCity(),
+      b.getProposedProjectState(),
+      b.getProposedProjectZipCode(),
+      b.getProjectLinkOrigin(),
       b.getValidUntil(),
       b.getCommercialTerms(),
       b.getNotes(),
@@ -472,6 +542,8 @@ public class BudgetService {
       b.getMarginPercent(),
       b.getStatus(),
       b.getFinalizedAt(),
+      b.getApprovedAt(),
+      b.getRejectedAt(),
       cost,
       sale,
       ss);

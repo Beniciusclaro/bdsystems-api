@@ -2,6 +2,8 @@ package com.bdsystems.bdsystems_api.budgets.controllers;
 
 import com.bdsystems.bdsystems_api.auth.security.TenantIds;
 import com.bdsystems.bdsystems_api.budgets.domains.dtos.BudgetDtos.ItemRequest;
+import com.bdsystems.bdsystems_api.budgets.domains.dtos.BudgetDtos.ApprovalRequest;
+import com.bdsystems.bdsystems_api.budgets.domains.dtos.BudgetDtos.ApprovalResponse;
 import com.bdsystems.bdsystems_api.budgets.domains.dtos.BudgetDtos.Proposal;
 import com.bdsystems.bdsystems_api.budgets.domains.dtos.BudgetDtos.QuantityRequest;
 import com.bdsystems.bdsystems_api.budgets.domains.dtos.BudgetDtos.Request;
@@ -147,6 +149,22 @@ public class BudgetController {
     @AuthenticationPrincipal Jwt j) {
     return s.finalizeBudget(id,
       TenantIds.from(j));
+  }
+
+  @PostMapping("/{id}/approve-and-create-project")
+  ApprovalResponse approveAndCreateProject(@PathVariable UUID id,
+    @Valid @RequestBody ApprovalRequest request,
+    @AuthenticationPrincipal Jwt jwt) {
+    return s.approveAndCreateProject(id,
+      request,
+      TenantIds.from(jwt));
+  }
+
+  @PostMapping("/{id}/reject")
+  Response reject(@PathVariable UUID id,
+    @AuthenticationPrincipal Jwt jwt) {
+    return s.reject(id,
+      TenantIds.from(jwt));
   }
 
   @PostMapping("/{id}/duplicate")

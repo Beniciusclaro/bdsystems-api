@@ -1,7 +1,9 @@
 package com.bdsystems.bdsystems_api.budgets.domains.dtos;
 
 import com.bdsystems.bdsystems_api.budgets.domains.entities.BudgetStatus;
+import com.bdsystems.bdsystems_api.budgets.domains.entities.ProjectLinkOrigin;
 import com.bdsystems.bdsystems_api.compositions.domains.entities.ComponentType;
+import com.bdsystems.bdsystems_api.projects.domains.dtos.ProjectDtos;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -19,14 +21,32 @@ public final class BudgetDtos {
 
   public record Request(
     @NotNull UUID clientId,
-    @NotNull UUID projectId,
     @NotBlank @Size(max = 50) String number,
     @NotBlank @Size(max = 180) String title,
     LocalDate validUntil,
     String commercialTerms,
     String notes,
     @NotNull @DecimalMin("0") BigDecimal taxPercent,
-    @NotNull @DecimalMin("0") BigDecimal marginPercent
+    @NotNull @DecimalMin("0") BigDecimal marginPercent,
+    @NotBlank @Size(max = 180) String proposedProjectName,
+    String proposedProjectDescription,
+    @Size(max = 180) String proposedProjectStreet,
+    @Size(max = 100) String proposedProjectCity,
+    @Size(max = 100) String proposedProjectState,
+    @Size(max = 20) String proposedProjectZipCode
+  ) {
+  }
+
+  public record ApprovalRequest(
+    @NotBlank @Size(max = 50) String code,
+    @NotBlank @Size(max = 180) String name,
+    String description,
+    @Size(max = 180) String street,
+    @Size(max = 100) String city,
+    @Size(max = 100) String state,
+    @Size(max = 20) String zipCode,
+    LocalDate plannedStartDate,
+    LocalDate plannedEndDate
   ) {
   }
 
@@ -93,6 +113,13 @@ public final class BudgetDtos {
     String clientName,
     UUID projectId,
     String projectName,
+    String proposedProjectName,
+    String proposedProjectDescription,
+    String proposedProjectStreet,
+    String proposedProjectCity,
+    String proposedProjectState,
+    String proposedProjectZipCode,
+    ProjectLinkOrigin projectLinkOrigin,
     LocalDate validUntil,
     String commercialTerms,
     String notes,
@@ -100,9 +127,17 @@ public final class BudgetDtos {
     BigDecimal marginPercent,
     BudgetStatus status,
     OffsetDateTime finalizedAt,
+    OffsetDateTime approvedAt,
+    OffsetDateTime rejectedAt,
     BigDecimal totalCost,
     BigDecimal totalSalePrice,
     List<StageResponse> stages
+  ) {
+  }
+
+  public record ApprovalResponse(
+    Response budget,
+    ProjectDtos.Response project
   ) {
   }
 

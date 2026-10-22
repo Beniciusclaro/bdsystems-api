@@ -45,9 +45,24 @@ public class Budget {
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "client_id")
   private Client client;
-  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "project_id")
   private Project project;
+  @Column(name = "proposed_project_name", nullable = false, length = 180)
+  private String proposedProjectName;
+  @Column(name = "proposed_project_description", columnDefinition = "text")
+  private String proposedProjectDescription;
+  @Column(name = "proposed_project_street", length = 180)
+  private String proposedProjectStreet;
+  @Column(name = "proposed_project_city", length = 100)
+  private String proposedProjectCity;
+  @Column(name = "proposed_project_state", length = 100)
+  private String proposedProjectState;
+  @Column(name = "proposed_project_zip_code", length = 20)
+  private String proposedProjectZipCode;
+  @Enumerated(EnumType.STRING)
+  @Column(name = "project_link_origin", length = 20)
+  private ProjectLinkOrigin projectLinkOrigin;
   @Column(nullable = false, length = 50)
   private String number;
   @Column(nullable = false, length = 180)
@@ -75,6 +90,10 @@ public class Budget {
   private String projectAddressSnapshot;
   @Column(name = "finalized_at")
   private OffsetDateTime finalizedAt;
+  @Column(name = "approved_at")
+  private OffsetDateTime approvedAt;
+  @Column(name = "rejected_at")
+  private OffsetDateTime rejectedAt;
   @Column(name = "created_at", nullable = false)
   private OffsetDateTime createdAt;
   @Column(name = "updated_at")
@@ -83,33 +102,43 @@ public class Budget {
   @OrderBy("sortOrder asc")
   private List<BudgetStage> stages = new ArrayList<>();
 
-  public Budget(Company c) {
-    company = c;
+  public Budget(Company company) {
+    this.company = company;
   }
 
-  public void update(Client c,
-    Project p,
+  public void update(Client client,
     String number,
     String title,
-    LocalDate valid,
-    String terms,
+    LocalDate validUntil,
+    String commercialTerms,
     String notes,
-    BigDecimal tax,
-    BigDecimal margin) {
-    client = c;
-    project = p;
+    BigDecimal taxPercent,
+    BigDecimal marginPercent,
+    String proposedProjectName,
+    String proposedProjectDescription,
+    String proposedProjectStreet,
+    String proposedProjectCity,
+    String proposedProjectState,
+    String proposedProjectZipCode) {
+    this.client = client;
     this.number = number;
     this.title = title;
-    validUntil = valid;
-    commercialTerms = terms;
+    this.validUntil = validUntil;
+    this.commercialTerms = commercialTerms;
     this.notes = notes;
-    taxPercent = tax;
-    marginPercent = margin;
+    this.taxPercent = taxPercent;
+    this.marginPercent = marginPercent;
+    this.proposedProjectName = proposedProjectName;
+    this.proposedProjectDescription = proposedProjectDescription;
+    this.proposedProjectStreet = proposedProjectStreet;
+    this.proposedProjectCity = proposedProjectCity;
+    this.proposedProjectState = proposedProjectState;
+    this.proposedProjectZipCode = proposedProjectZipCode;
   }
 
-  public void addStage(BudgetStage s) {
-    s.attach(this);
-    stages.add(s);
+  public void addStage(BudgetStage stage) {
+    stage.attach(this);
+    stages.add(stage);
   }
 
   public void finalizeBudget() {
@@ -117,12 +146,25 @@ public class Budget {
     finalizedAt = OffsetDateTime.now();
     clientNameSnapshot = client.getName();
     clientDocumentSnapshot = client.getDocument();
-    projectNameSnapshot = project.getName();
+    projectNameSnapshot = proposedProjectName;
     projectAddressSnapshot = String.join(", ",
-      java.util.stream.Stream.of(project.getStreet(),
-        project.getCity(),
-        project.getState(),
-        project.getZipCode()).filter(Objects::nonNull).filter(v -> !v.isBlank()).toList());
+      java.util.stream.Stream.of(proposedProjectStreet,
+        proposedProjectCity,
+        proposedProjectState,
+        proposedProjectZipCode).filter(Objects::nonNull).filter(value -> !value.isBlank()).toList());
+  }
+
+  public void approve(Project project,
+    ProjectLinkOrigin projectLinkOrigin) {
+    this.project = Objects.requireNonNull(project);
+    this.projectLinkOrigin = Objects.requireNonNull(projectLinkOrigin);
+    status = BudgetStatus.APPROVED;
+    approvedAt = OffsetDateTime.now();
+  }
+
+  public void reject() {
+    status = BudgetStatus.REJECTED;
+    rejectedAt = OffsetDateTime.now();
   }
 
   @PrePersist
