@@ -15,7 +15,9 @@ public interface CompositionRepository extends JpaRepository<Composition, UUID> 
     String code,
     UUID id);
 
-  @Query("select c from Composition c where c.company.id=:companyId and (:active is null or c.active=:active) and lower(c.name) like lower(concat('%',:search,'%'))")
+  @Query("select c from Composition c where c.company.id=:companyId and (:active is null or c.active=:active) " +
+    "and (:search='' or lower(c.code) like lower(concat('%',:search,'%')) " +
+    "or lower(c.name) like lower(concat('%',:search,'%')))")
   Page<Composition> search(UUID companyId,
     Boolean active,
     String search,

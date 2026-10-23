@@ -1,6 +1,7 @@
 package com.bdsystems.bdsystems_api.projects.repositories;
 
 import com.bdsystems.bdsystems_api.projects.domains.entities.Project;
+import com.bdsystems.bdsystems_api.projects.domains.entities.ProjectStatus;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,10 +20,14 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
     UUID id);
 
   @Query("select p from Project p where p.company.id=:companyId and (:active is null or p.active=:active) " +
-    "and (:clientId is null or p.client.id=:clientId) and lower(p.name) like lower(concat('%',:search,'%'))")
+    "and (:clientId is null or p.client.id=:clientId) and (:status is null or p.status=:status) " +
+    "and (:search='' or lower(p.code) like lower(concat('%',:search,'%')) " +
+    "or lower(p.name) like lower(concat('%',:search,'%')) " +
+    "or lower(p.client.name) like lower(concat('%',:search,'%')))")
   Page<Project> search(UUID companyId,
     Boolean active,
     UUID clientId,
+    ProjectStatus status,
     String search,
     Pageable pageable);
 }

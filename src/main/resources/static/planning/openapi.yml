@@ -18,7 +18,15 @@ paths:
     put: { tags: [ Planning ], summary: Update client, requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ClientRequest' } } } }, responses: { '200': { description: Client updated } } }
     delete: { tags: [ Planning ], summary: Deactivate client, responses: { '204': { description: Client deactivated }, '404': { description: Client not found } } }
   /api/projects:
-    get: { tags: [ Planning ], summary: List projects, responses: { '200': { description: Project page } } }
+    get:
+      tags: [ Planning ]
+      summary: List projects
+      parameters:
+        - { name: active, in: query, schema: { type: boolean } }
+        - { name: clientId, in: query, schema: { type: string, format: uuid } }
+        - { name: search, in: query, description: Partial case-insensitive match on project code, project name, or client name, schema: { type: string } }
+        - { name: status, in: query, schema: { type: string, enum: [ PLANNING, ACTIVE, ON_HOLD, COMPLETED, CANCELLED ] } }
+      responses: { '200': { description: Project page }, '400': { description: Invalid filter value } }
     post:
       tags: [ Planning ]
       summary: Create project directly (legacy compatibility)
@@ -30,10 +38,41 @@ paths:
     get: { tags: [ Planning ], summary: Get project, responses: { '200': { description: Project } } }
     put: { tags: [ Planning ], summary: Update project, responses: { '200': { description: Project updated } } }
   /api/labor-roles:
-    get: { tags: [ Planning ], summary: List labor roles and current hourly costs, responses: { '200': { description: Labor role page } } }
+    get:
+      tags: [ Planning ]
+      summary: List labor roles and current hourly costs
+      parameters:
+        - { name: search, in: query, description: Partial case-insensitive match on code or name, schema: { type: string } }
+        - { name: active, in: query, schema: { type: boolean } }
+      responses: { '200': { description: Labor role page } }
     post: { tags: [ Planning ], summary: Create labor role, responses: { '201': { description: Labor role created } } }
+  /api/labor-cost-profiles:
+    get:
+      tags: [ Planning ]
+      summary: List active employees and their optional labor cost profiles
+      description: Returns every non-deleted ACTIVE employee in the authenticated tenant exactly once, including employees without a configured profile.
+      parameters:
+        - { name: search, in: query, description: Partial case-insensitive match on employee name or number, schema: { type: string } }
+        - { name: configured, in: query, description: Filter employees by the presence of a labor cost profile, schema: { type: boolean } }
+      responses:
+        '200':
+          description: Labor cost profile page
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: array
+                    items: { $ref: '#/components/schemas/LaborCostProfileListResponse' }
   /api/compositions:
-    get: { tags: [ Planning ], summary: List service compositions, responses: { '200': { description: Composition page } } }
+    get:
+      tags: [ Planning ]
+      summary: List service compositions
+      parameters:
+        - { name: active, in: query, schema: { type: boolean } }
+        - { name: search, in: query, description: Partial case-insensitive match on code or name, schema: { type: string } }
+      responses: { '200': { description: Composition page } }
     post: { tags: [ Planning ], summary: Create composition with components, responses: { '201': { description: Composition created } } }
   /api/compositions/{id}:
     parameters: [ { $ref: '#/components/parameters/Id' } ]
@@ -57,7 +96,13 @@ paths:
         '204': { description: Component deleted }
         '404': { description: Composition or component not found }
   /api/budgets:
-    get: { tags: [ Planning ], summary: List budgets, responses: { '200': { description: Budget page } } }
+    get:
+      tags: [ Planning ]
+      summary: List budgets
+      parameters:
+        - { name: search, in: query, description: Partial case-insensitive match on number, title, client name, linked project name, or proposed project name, schema: { type: string } }
+        - { name: status, in: query, schema: { type: string, enum: [ DRAFT, FINALIZED, APPROVED, REJECTED ] } }
+      responses: { '200': { description: Budget page }, '400': { description: Invalid filter value } }
     post:
       tags: [ Planning ]
       summary: Create budget draft without a project
@@ -93,6 +138,26 @@ components:
   parameters:
     Id: { name: id, in: path, required: true, schema: { type: string, format: uuid } }
   schemas:
+    LaborCostProfileListResponse:
+      type: object
+      required: [ employeeId, employeeNumber, employeeName, position, configured ]
+      properties:
+        employeeId: { type: string, format: uuid }
+        employeeNumber: { type: string }
+        employeeName: { type: string }
+        position: { type: string }
+        paymentMethod: { type: string, nullable: true, enum: [ MONTHLY, WEEKLY, DAILY, HOURLY ] }
+        paymentAmount: { type: number, nullable: true }
+        configured: { type: boolean }
+        laborRoleId: { type: string, format: uuid, nullable: true }
+        laborRoleCode: { type: string, nullable: true }
+        laborRoleName: { type: string, nullable: true }
+        productiveHoursMonth: { type: number, nullable: true }
+        workDaysMonth: { type: number, nullable: true }
+        employerChargesPercent: { type: number, nullable: true }
+        monthlyBenefits: { type: number, nullable: true }
+        otherMonthlyCosts: { type: number, nullable: true }
+        effectiveHourlyCost: { type: number, nullable: true }
     BudgetRequest:
       type: object
       required: [ clientId, number, title, taxPercent, marginPercent, proposedProjectName ]

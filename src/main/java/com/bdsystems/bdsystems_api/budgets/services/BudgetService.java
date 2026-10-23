@@ -131,11 +131,19 @@ public class BudgetService {
   }
 
   @Transactional(readOnly = true)
-  public Page<Response> list(UUID t,
-    Pageable p) {
-    return budgets.findByCompanyId(t,
-      p).map(b -> map(find(b.getId(),
-      t)));
+  public Page<Response> list(UUID tenantId,
+    String search,
+    BudgetStatus status,
+    Pageable pageable) {
+    return budgets.search(tenantId,
+      normalizeSearch(search),
+      status,
+      pageable).map(budget -> map(find(budget.getId(),
+      tenantId)));
+  }
+
+  private String normalizeSearch(String search) {
+    return search == null || search.isBlank() ? "" : search.trim();
   }
 
   @Transactional

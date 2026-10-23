@@ -95,11 +95,13 @@ public class ProjectService {
     Boolean active,
     UUID clientId,
     String search,
+    ProjectStatus status,
     Pageable pageable) {
     return projects.search(tenantId,
       active,
       clientId,
-      search == null ? "" : search,
+      status,
+      search == null || search.isBlank() ? "" : search.trim(),
       pageable).map(this::map);
   }
 

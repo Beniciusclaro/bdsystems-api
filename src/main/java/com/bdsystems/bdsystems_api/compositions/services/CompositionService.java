@@ -116,7 +116,7 @@ public class CompositionService {
     Pageable pageable) {
     return compositions.search(tenantId,
       active,
-      search == null ? "" : search,
+      search == null || search.isBlank() ? "" : search.trim(),
       pageable).map(composition -> map(find(composition.getId(),
         tenantId),
       tenantId));

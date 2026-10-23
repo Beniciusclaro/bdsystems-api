@@ -10,6 +10,7 @@ import com.bdsystems.bdsystems_api.budgets.domains.dtos.BudgetDtos.Request;
 import com.bdsystems.bdsystems_api.budgets.domains.dtos.BudgetDtos.Response;
 import com.bdsystems.bdsystems_api.budgets.domains.dtos.BudgetDtos.StageRequest;
 import com.bdsystems.bdsystems_api.budgets.services.BudgetService;
+import com.bdsystems.bdsystems_api.budgets.domains.entities.BudgetStatus;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
@@ -46,10 +48,14 @@ public class BudgetController {
   }
 
   @GetMapping
-  Page<Response> list(Pageable p,
-    @AuthenticationPrincipal Jwt j) {
-    return s.list(TenantIds.from(j),
-      p);
+  Page<Response> list(@RequestParam(required = false) String search,
+    @RequestParam(required = false) BudgetStatus status,
+    Pageable pageable,
+    @AuthenticationPrincipal Jwt jwt) {
+    return s.list(TenantIds.from(jwt),
+      search,
+      status,
+      pageable);
   }
 
   @GetMapping("/{id}")

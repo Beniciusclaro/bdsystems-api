@@ -41,4 +41,26 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
     @Param("department") String department,
     Pageable pageable
   );
+
+  @Query("""
+    select employee from Employee employee
+    where employee.company.id = :companyId
+      and employee.enable = false
+      and employee.status = :status
+      and (:search = ''
+        or lower(employee.employeeNumber) like lower(concat('%', :search, '%'))
+        or lower(employee.fullName) like lower(concat('%', :search, '%')))
+      and (:configured is null
+        or (:configured = true and exists (
+          select profile.id from EmployeeLaborCost profile where profile.employee = employee))
+        or (:configured = false and not exists (
+          select profile.id from EmployeeLaborCost profile where profile.employee = employee)))
+    """)
+  Page<Employee> findLaborCostProfiles(
+    @Param("companyId") UUID companyId,
+    @Param("status") EmployeeStatus status,
+    @Param("search") String search,
+    @Param("configured") Boolean configured,
+    Pageable pageable
+  );
 }

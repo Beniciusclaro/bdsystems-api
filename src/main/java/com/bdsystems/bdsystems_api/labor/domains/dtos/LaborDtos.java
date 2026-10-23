@@ -1,6 +1,7 @@
 package com.bdsystems.bdsystems_api.labor.domains.dtos;
 
 import com.bdsystems.bdsystems_api.labor.domains.entities.LaborCostingMode;
+import com.bdsystems.bdsystems_api.employee.domains.entities.PaymentMethod;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
@@ -50,6 +51,26 @@ public final class LaborDtos {
   public record ProfileResponse(
     UUID employeeId,
     UUID laborRoleId,
+    BigDecimal productiveHoursMonth,
+    BigDecimal workDaysMonth,
+    BigDecimal employerChargesPercent,
+    BigDecimal monthlyBenefits,
+    BigDecimal otherMonthlyCosts,
+    BigDecimal effectiveHourlyCost
+  ) {
+  }
+
+  public record ProfileListResponse(
+    UUID employeeId,
+    String employeeNumber,
+    String employeeName,
+    String position,
+    PaymentMethod paymentMethod,
+    BigDecimal paymentAmount,
+    boolean configured,
+    UUID laborRoleId,
+    String laborRoleCode,
+    String laborRoleName,
     BigDecimal productiveHoursMonth,
     BigDecimal workDaysMonth,
     BigDecimal employerChargesPercent,

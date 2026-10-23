@@ -77,6 +77,8 @@ paths:
     $ref: './planning/openapi.yml#/paths/~1api~1projects~1{id}'
   /api/labor-roles:
     $ref: './planning/openapi.yml#/paths/~1api~1labor-roles'
+  /api/labor-cost-profiles:
+    $ref: './planning/openapi.yml#/paths/~1api~1labor-cost-profiles'
   /api/compositions:
     $ref: './planning/openapi.yml#/paths/~1api~1compositions'
   /api/compositions/{id}:

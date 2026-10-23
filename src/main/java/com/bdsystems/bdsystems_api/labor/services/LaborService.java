@@ -6,6 +6,7 @@ import com.bdsystems.bdsystems_api.employee.domains.entities.EmployeeStatus;
 import com.bdsystems.bdsystems_api.employee.domains.entities.PaymentMethod;
 import com.bdsystems.bdsystems_api.employee.repositories.EmployeeRepository;
 import com.bdsystems.bdsystems_api.labor.domains.dtos.LaborDtos.ProfileRequest;
+import com.bdsystems.bdsystems_api.labor.domains.dtos.LaborDtos.ProfileListResponse;
 import com.bdsystems.bdsystems_api.labor.domains.dtos.LaborDtos.ProfileResponse;
 import com.bdsystems.bdsystems_api.labor.domains.dtos.LaborDtos.RoleRequest;
 import com.bdsystems.bdsystems_api.labor.domains.dtos.LaborDtos.RoleResponse;
@@ -66,11 +67,28 @@ public class LaborService {
   }
 
   @Transactional(readOnly = true)
-  public Page<RoleResponse> list(UUID t,
-    Pageable p) {
-    return roles.findByCompanyId(t,
-      p).map(r -> map(r,
-      t));
+  public Page<RoleResponse> list(UUID tenantId,
+    String search,
+    Boolean active,
+    Pageable pageable) {
+    return roles.search(tenantId,
+      normalizeSearch(search),
+      active,
+      pageable).map(laborRole -> map(laborRole,
+      tenantId));
+  }
+
+  @Transactional(readOnly = true)
+  public Page<ProfileListResponse> listProfiles(UUID tenantId,
+    String search,
+    Boolean configured,
+    Pageable pageable) {
+    return employees.findLaborCostProfiles(tenantId,
+      EmployeeStatus.ACTIVE,
+      normalizeSearch(search),
+      configured,
+      pageable).map(employee -> profileListMap(employee,
+      tenantId));
   }
 
   @Transactional
@@ -199,6 +217,41 @@ public class LaborService {
       p.getMonthlyBenefits(),
       p.getOtherMonthlyCosts(),
       effective(p));
+  }
+
+  private ProfileListResponse profileListMap(Employee employee,
+    UUID tenantId) {
+    EmployeeLaborCost profile = profiles.findByEmployeeIdAndEmployeeCompanyId(employee.getId(),
+      tenantId).orElse(null);
+    LaborRole laborRole = profile == null ? null : profile.getLaborRole();
+    return new ProfileListResponse(employee.getId(),
+      employee.getEmployeeNumber(),
+      employee.getFullName(),
+      employee.getPosition(),
+      employee.getPaymentMethod(),
+      employee.getPaymentAmount(),
+      profile != null,
+      laborRole == null ? null : laborRole.getId(),
+      laborRole == null ? null : laborRole.getCode(),
+      laborRole == null ? null : laborRole.getName(),
+      profile == null ? null : profile.getProductiveHoursMonth(),
+      profile == null ? null : profile.getWorkDaysMonth(),
+      profile == null ? null : profile.getEmployerChargesPercent(),
+      profile == null ? null : profile.getMonthlyBenefits(),
+      profile == null ? null : profile.getOtherMonthlyCosts(),
+      effectiveIfCalculable(profile));
+  }
+
+  private BigDecimal effectiveIfCalculable(EmployeeLaborCost profile) {
+    if (profile == null || profile.getEmployee().getPaymentMethod() == null || profile.getEmployee().getPaymentAmount() == null)
+      return null;
+    if (profile.getEmployee().getPaymentMethod() == PaymentMethod.DAILY && profile.getWorkDaysMonth() == null)
+      return null;
+    return effective(profile);
+  }
+
+  private String normalizeSearch(String search) {
+    return search == null || search.isBlank() ? "" : search.trim();
   }
 
   private ResponseStatusException error(HttpStatus s,

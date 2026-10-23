@@ -4,6 +4,7 @@ import com.bdsystems.bdsystems_api.auth.security.TenantIds;
 import com.bdsystems.bdsystems_api.projects.domains.dtos.ProjectDtos.Request;
 import com.bdsystems.bdsystems_api.projects.domains.dtos.ProjectDtos.Response;
 import com.bdsystems.bdsystems_api.projects.services.ProjectService;
+import com.bdsystems.bdsystems_api.projects.domains.entities.ProjectStatus;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -42,12 +43,14 @@ public class ProjectController {
   Page<Response> list(@RequestParam(required = false) Boolean active,
     @RequestParam(required = false) UUID clientId,
     @RequestParam(required = false) String search,
+    @RequestParam(required = false) ProjectStatus status,
     Pageable p,
     @AuthenticationPrincipal Jwt j) {
     return s.list(TenantIds.from(j),
       active,
       clientId,
       search,
+      status,
       p);
   }
 
