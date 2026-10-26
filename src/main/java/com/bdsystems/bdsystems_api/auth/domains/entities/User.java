@@ -1,6 +1,7 @@
 package com.bdsystems.bdsystems_api.auth.domains.entities;
 
 import jakarta.persistence.*;
+import com.bdsystems.bdsystems_api.employee.domains.entities.Employee;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -8,7 +9,10 @@ import java.util.UUID;
 
 @Getter
 @Entity
-@Table(name = "users")
+@Table(name = "users", uniqueConstraints = {
+  @UniqueConstraint(name = "uk_users_email", columnNames = "email"),
+  @UniqueConstraint(name = "uk_users_employee", columnNames = "employee_id")
+})
 @NoArgsConstructor
 public class User extends Person {
 
@@ -27,13 +31,18 @@ public class User extends Person {
   @JoinColumn(name = "company_id", nullable = false)
   private Company company;
 
+  @OneToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "employee_id", nullable = false, unique = true)
+  private Employee employee;
+
   public User(UUID id,
     String name,
     String email,
     String password,
     Role role,
     Address address,
-    Company company) {
+    Company company,
+    Employee employee) {
     super(name,
       email,
       address);
@@ -41,13 +50,6 @@ public class User extends Person {
     this.password = password;
     this.role = role;
     this.company = company;
-  }
-
-  public User(String email,
-    String password) {
-    super(null,
-      email,
-      null);
-    this.password = password;
+    this.employee = employee;
   }
 }

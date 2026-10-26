@@ -15,6 +15,14 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
   boolean existsByCompanyIdAndEmployeeNumber(UUID companyId,
     String employeeNumber);
 
+  boolean existsByEmail(String email);
+
+  Optional<Employee> findByCompanyIdAndEmail(UUID companyId,
+    String email);
+
+  boolean existsByEmailAndIdNot(String email,
+    UUID id);
+
   boolean existsByCompanyIdAndEmployeeNumberAndIdNot(
     UUID companyId,
     String employeeNumber,
@@ -47,6 +55,11 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
     where employee.company.id = :companyId
       and employee.enable = false
       and employee.status = :status
+      and employee.employeeNumber is not null
+      and employee.position is not null
+      and employee.admissionDate is not null
+      and employee.paymentMethod is not null
+      and employee.paymentAmount is not null
       and (:search = ''
         or lower(employee.employeeNumber) like lower(concat('%', :search, '%'))
         or lower(employee.fullName) like lower(concat('%', :search, '%')))

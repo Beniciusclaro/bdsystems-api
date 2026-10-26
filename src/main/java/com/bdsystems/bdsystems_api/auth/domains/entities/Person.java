@@ -12,10 +12,10 @@ import java.util.Date;
 @MappedSuperclass
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public abstract class Person {
-  @Column(name = "name", nullable = false, unique = true)
+  @Column(name = "name", nullable = false)
   private String fullName;
 
-  @Column(nullable = false, unique = true)
+  @Column(nullable = false)
   private String email;
 
   @Column(name = "phone_number")
@@ -27,8 +27,8 @@ public abstract class Person {
   @Column(name = "birth_date")
   private LocalDate birthDate;
 
-  @OneToOne(optional = false)
-  @JoinColumn(name = "address_id", nullable = false, unique = true)
+  @OneToOne
+  @JoinColumn(name = "address_id", unique = true)
   private Address address;
 
   @Column(nullable = false)
@@ -80,6 +80,10 @@ public abstract class Person {
     this.phoneNumber = phoneNumber;
     this.documentNumber = documentNumber;
     this.birthDate = birthDate;
+  }
+
+  public void updateAddress(Address address) {
+    this.address = address;
   }
 
   @PrePersist

@@ -28,8 +28,8 @@ public class AuthenticationController {
   public ResponseEntity<UserResponse> register(
     @Valid @RequestBody UserRequest request
   ) {
-    log.info("Received request to register user: {}",
-      request);
+    log.info("Received request to register company administrator with email {}",
+      request.email());
     return ResponseEntity
       .status(HttpStatus.CREATED)
       .body(service.register(request));

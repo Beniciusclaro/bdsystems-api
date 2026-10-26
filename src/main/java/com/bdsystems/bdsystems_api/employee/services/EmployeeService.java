@@ -4,6 +4,7 @@ import com.bdsystems.bdsystems_api.auth.domains.entities.Address;
 import com.bdsystems.bdsystems_api.auth.domains.entities.Company;
 import com.bdsystems.bdsystems_api.auth.repositories.AddressRepository;
 import com.bdsystems.bdsystems_api.auth.repositories.CompanyRepository;
+import com.bdsystems.bdsystems_api.auth.repositories.UserRepository;
 import com.bdsystems.bdsystems_api.employee.domains.dtos.EmployeeRequest;
 import com.bdsystems.bdsystems_api.employee.domains.dtos.EmployeeResponse;
 import com.bdsystems.bdsystems_api.employee.domains.entities.Employee;
@@ -24,27 +25,36 @@ public class EmployeeService {
   private final EmployeeRepository employeeRepository;
   private final CompanyRepository companyRepository;
   private final AddressRepository addressRepository;
+  private final UserRepository userRepository;
 
   public EmployeeService(
     EmployeeRepository employeeRepository,
     CompanyRepository companyRepository,
-    AddressRepository addressRepository
+    AddressRepository addressRepository,
+    UserRepository userRepository
   ) {
     this.employeeRepository = employeeRepository;
     this.companyRepository = companyRepository;
     this.addressRepository = addressRepository;
+    this.userRepository = userRepository;
   }
 
   @Transactional
   public EmployeeResponse create(EmployeeRequest request,
     UUID companyId) {
-    if (employeeRepository.existsByCompanyIdAndEmployeeNumber(
+    if (request.employeeNumber() != null && employeeRepository.existsByCompanyIdAndEmployeeNumber(
       companyId,
       request.employeeNumber()
     )) {
       throw new ResponseStatusException(
         HttpStatus.CONFLICT,
         "Employee number already registered for this company"
+      );
+    }
+    if (employeeRepository.existsByEmail(request.email())) {
+      throw new ResponseStatusException(
+        HttpStatus.CONFLICT,
+        "Employee email already registered"
       );
     }
 
@@ -94,7 +104,7 @@ public class EmployeeService {
         "Employee not found"
       ));
 
-    if (employeeRepository.existsByCompanyIdAndEmployeeNumberAndIdNot(
+    if (request.employeeNumber() != null && employeeRepository.existsByCompanyIdAndEmployeeNumberAndIdNot(
       companyId,
       request.employeeNumber(),
       id
@@ -104,14 +114,50 @@ public class EmployeeService {
         "Employee number already registered for this company"
       );
     }
+    if (employeeRepository.existsByEmailAndIdNot(
+      request.email(),
+      id
+    )) {
+      throw new ResponseStatusException(
+        HttpStatus.CONFLICT,
+        "Employee email already registered"
+      );
+    }
+
+    var linkedUser = userRepository.findByEmployeeId(id).orElse(null);
+    if (linkedUser != null && userRepository.existsByEmailAndEmployeeIdNot(
+      request.email(),
+      id
+    )) {
+      throw new ResponseStatusException(
+        HttpStatus.CONFLICT,
+        "Email already registered"
+      );
+    }
+    if (linkedUser != null && linkedUser.isActive()
+      && request.status() != EmployeeStatus.ACTIVE) {
+      throw new ResponseStatusException(
+        HttpStatus.CONFLICT,
+        "An employee linked to an active user cannot be deactivated"
+      );
+    }
 
     EmployeeRequest.AddressRequest addressRequest = request.address();
-    employee.getAddress().update(
-      addressRequest.street(),
-      addressRequest.city(),
-      addressRequest.state(),
-      addressRequest.zipCode()
-    );
+    if (employee.getAddress() == null) {
+      employee.updateAddress(addressRepository.save(new Address(
+        addressRequest.street(),
+        addressRequest.city(),
+        addressRequest.state(),
+        addressRequest.zipCode()
+      )));
+    } else {
+      employee.getAddress().update(
+        addressRequest.street(),
+        addressRequest.city(),
+        addressRequest.state(),
+        addressRequest.zipCode()
+      );
+    }
     employee.updatePersonalDetails(
       request.fullName(),
       request.email(),
@@ -129,6 +175,16 @@ public class EmployeeService {
       request.paymentMethod(),
       request.paymentAmount()
     );
+    if (linkedUser != null) {
+      linkedUser.updatePersonalDetails(
+        request.fullName(),
+        request.email(),
+        linkedUser.getPhoneNumber(),
+        linkedUser.getDocumentNumber(),
+        linkedUser.getBirthDate()
+      );
+      userRepository.save(linkedUser);
+    }
 
     return toResponse(employeeRepository.save(employee));
   }
@@ -142,6 +198,12 @@ public class EmployeeService {
         HttpStatus.NOT_FOUND,
         "Employee not found"
       ));
+    if (userRepository.existsByEmployeeIdAndActiveTrue(id)) {
+      throw new ResponseStatusException(
+        HttpStatus.CONFLICT,
+        "An employee linked to an active user cannot be deleted"
+      );
+    }
     employee.markAsDeleted();
     employeeRepository.save(employee);
   }
@@ -178,7 +240,7 @@ public class EmployeeService {
       employee.getPhoneNumber(),
       employee.getDocumentNumber(),
       employee.getBirthDate(),
-      new EmployeeResponse.AddressResponse(
+      address == null ? null : new EmployeeResponse.AddressResponse(
         address.getStreet(),
         address.getCity(),
         address.getState(),

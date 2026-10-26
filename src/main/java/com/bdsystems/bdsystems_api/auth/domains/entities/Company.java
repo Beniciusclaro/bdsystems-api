@@ -16,7 +16,7 @@ public class Company {
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
 
-  @Column(nullable = false, length = 150)
+  @Column(nullable = false, unique = true, length = 150)
   private String name;
 
   @Column(name = "created_at", nullable = false)

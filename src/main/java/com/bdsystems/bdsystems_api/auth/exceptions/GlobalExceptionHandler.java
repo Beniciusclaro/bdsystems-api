@@ -2,12 +2,28 @@ package com.bdsystems.bdsystems_api.auth.exceptions;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+  @ExceptionHandler(DataIntegrityViolationException.class)
+  public ResponseEntity<ApiError> handleDataIntegrityViolation(
+    DataIntegrityViolationException exception
+  ) {
+    ApiError error = new ApiError(
+      HttpStatus.CONFLICT.value(),
+      "The requested value is already registered",
+      null
+    );
+
+    return ResponseEntity
+      .status(HttpStatus.CONFLICT)
+      .body(error);
+  }
 
   @ExceptionHandler(EmailAlreadyRegisteredException.class)
   public ResponseEntity<ApiError> handleEmailAlreadyRegistered(

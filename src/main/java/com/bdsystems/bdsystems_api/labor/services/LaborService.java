@@ -173,7 +173,12 @@ public class LaborService {
     UUID t) {
     return profiles.findByLaborRoleIdAndEmployeeCompanyIdAndEmployeeEnableFalseAndEmployeeStatus(r.getId(),
       t,
-      EmployeeStatus.ACTIVE).stream().filter(p -> p.getEmployee().getPaymentAmount() != null && p.getEmployee().getPaymentMethod() != null).toList();
+      EmployeeStatus.ACTIVE).stream().filter(profile ->
+      profile.getEmployee().getEmployeeNumber() != null
+        && profile.getEmployee().getPosition() != null
+        && profile.getEmployee().getAdmissionDate() != null
+        && profile.getEmployee().getPaymentAmount() != null
+        && profile.getEmployee().getPaymentMethod() != null).toList();
   }
 
   private BigDecimal effective(EmployeeLaborCost p) {

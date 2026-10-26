@@ -40,6 +40,10 @@ public class JwtService {
         "role",
         user.getRole().name()
       )
+      .claim(
+        "employee_id",
+        user.getEmployee().getId().toString()
+      )
       .build();
 
     JwsHeader header = JwsHeader.with(

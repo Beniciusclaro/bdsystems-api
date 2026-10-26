@@ -12,12 +12,16 @@ import com.bdsystems.bdsystems_api.auth.exceptions.EmailAlreadyRegisteredExcepti
 import com.bdsystems.bdsystems_api.auth.repositories.AddressRepository;
 import com.bdsystems.bdsystems_api.auth.repositories.CompanyRepository;
 import com.bdsystems.bdsystems_api.auth.repositories.UserRepository;
+import com.bdsystems.bdsystems_api.employee.domains.entities.Employee;
+import com.bdsystems.bdsystems_api.employee.repositories.EmployeeRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class AuthenticationService {
@@ -26,6 +30,7 @@ public class AuthenticationService {
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
   private final AddressRepository addressRepository;
+  private final EmployeeRepository employeeRepository;
 
   private final JwtService jwtService;
   private final AuthenticationManager authenticationManager;
@@ -35,6 +40,7 @@ public class AuthenticationService {
     UserRepository userRepository,
     PasswordEncoder passwordEncoder,
     AddressRepository addressRepository,
+    EmployeeRepository employeeRepository,
     JwtService jwtService,
     AuthenticationManager authenticationManager
   ) {
@@ -42,6 +48,7 @@ public class AuthenticationService {
     this.userRepository = userRepository;
     this.passwordEncoder = passwordEncoder;
     this.addressRepository = addressRepository;
+    this.employeeRepository = employeeRepository;
     this.jwtService = jwtService;
     this.authenticationManager = authenticationManager;
   }
@@ -53,30 +60,25 @@ public class AuthenticationService {
     if (userRepository.existsByEmail(request.email())) {
       throw new EmailAlreadyRegisteredException(request.email());
     }
+    if (companyRepository.existsByName(request.company().name())) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT,
+        "Company name already registered");
+    }
 
-    var existingCompany = companyRepository.findByName(request.company().name());
-
-    Company company = existingCompany.orElseGet(() -> companyRepository.save(
-      new Company(
-        request.company().name(),
-        addressRepository.save(
-          new Address(
-            request.company().address().street(),
-            request.company().address().city(),
-            request.company().address().state(),
-            request.company().address().zipcode()
-          )
-        )
-      )
-    ));
-
-    Role role = existingCompany.isPresent() ? Role.USER : Role.ADMIN;
-
-    Address savedAddress = addressRepository.save(new Address(
+    Address companyAddress = addressRepository.save(new Address(
       request.company().address().street(),
       request.company().address().city(),
       request.company().address().state(),
       request.company().address().zipcode()
+    ));
+    Company company = companyRepository.save(new Company(
+      request.company().name(),
+      companyAddress
+    ));
+    Employee employee = employeeRepository.save(Employee.incomplete(
+      request.name(),
+      request.email(),
+      company
     ));
 
     User user = new User(
@@ -84,9 +86,10 @@ public class AuthenticationService {
       request.name(),
       request.email(),
       passwordEncoder.encode(request.password()),
-      role,
-      savedAddress,
-      company
+      Role.ADMIN,
+      null,
+      company,
+      employee
     );
 
     user = userRepository.save(user);

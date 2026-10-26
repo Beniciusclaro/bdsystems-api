@@ -9,8 +9,8 @@ paths:
     post:
       tags:
         - Authentication
-      summary: Register a new user
-      description: Creates a user account for a company.
+      summary: Register a new company administrator
+      description: Atomically creates a new company, an incomplete active employee without a personal address, and an ADMIN user linked to that employee.
       operationId: register
       security: [ ]
       requestBody:
@@ -104,7 +104,6 @@ components:
         - email
         - password
         - company
-        - address
       properties:
         name:
           type: string
@@ -117,14 +116,6 @@ components:
           type: string
           format: password
           example: MyPassword123!
-        role:
-          type: string
-          enum:
-            - USER
-            - ADMIN
-            - MANAGER
-        address:
-          $ref: '#/components/schemas/AddressRequest'
         company:
           $ref: '#/components/schemas/CompanyRequest'
 
@@ -158,10 +149,6 @@ components:
         name:
           type: string
           example: BD Systems
-        id:
-          type: string
-          format: uuid
-          example: 550e8400-e29b-41d4-a716-446655440000
         address:
           $ref: '#/components/schemas/AddressRequest'
 

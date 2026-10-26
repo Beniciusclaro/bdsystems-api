@@ -10,7 +10,7 @@ paths:
       tags:
         - Employee
       summary: List employees
-      description: Returns a paginated list of enabled employees for the authenticated company. All filters are optional and can be combined; when multiple filters are supplied, they are combined with AND. Empty position or department values are ignored. Position and department use case-insensitive partial matching.
+      description: Returns a paginated list of enabled employees for the authenticated company, including incomplete employees created during public registration. Nullable personal, address, and professional fields are returned as null. All filters are optional and can be combined; when multiple filters are supplied, they are combined with AND. Empty position or department values are ignored. Position and department use case-insensitive partial matching.
       operationId: findAllEmployees
       security:
         - bearerAuth: [ ]
@@ -131,7 +131,7 @@ paths:
       tags:
         - Employee
       summary: Delete an employee
-      description: Soft deletes the employee by setting its enable flag to true, if it belongs to the company identified by the authenticated JWT tenant_id claim.
+      description: Soft deletes the employee by setting its enable flag to true, if it belongs to the authenticated company and is not linked to an active user.
       operationId: deleteEmployee
       security:
         - bearerAuth: [ ]
@@ -152,11 +152,13 @@ paths:
           description: JWT does not contain a valid tenant_id
         '404':
           description: Employee not found for the authenticated company
+        '409':
+          description: Employee is linked to an active user
     put:
       tags:
         - Employee
       summary: Update an employee
-      description: Replaces employee details for the employee identified by id, if it belongs to the company identified by the authenticated JWT tenant_id claim.
+      description: Replaces employee details for the authenticated company. Name and email changes are synchronized to a linked user. A linked active user prevents employee deactivation.
       operationId: updateEmployee
       security:
         - bearerAuth: [ ]
@@ -190,7 +192,7 @@ paths:
         '404':
           description: Employee not found for the authenticated company
         '409':
-          description: Employee number already registered for this company
+          description: Employee number or email conflict, or attempted deactivation of an employee linked to an active user
 
 components:
   securitySchemes:
@@ -222,6 +224,7 @@ components:
           example: taylor@example.com
         phoneNumber:
           type: string
+          nullable: true
           example: "+351900000000"
         documentNumber:
           type: string
@@ -312,18 +315,23 @@ components:
           nullable: true
         address:
           $ref: '#/components/schemas/AddressResponse'
+          nullable: true
         companyId:
           type: string
           format: uuid
         employeeNumber:
           type: string
+          nullable: true
         position:
           type: string
+          nullable: true
         department:
           type: string
+          nullable: true
         admissionDate:
           type: string
           format: date
+          nullable: true
         terminationDate:
           type: string
           format: date

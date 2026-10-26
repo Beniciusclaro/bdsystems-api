@@ -63,7 +63,7 @@ class EmployeeControllerTest {
         "Lisbon",
         "1000-001")
     );
-    Company company = companyRepository.save(new Company("Acme",
+    Company company = companyRepository.save(new Company("Employee Creation Acme",
       companyAddress));
     Instant now = Instant.now();
     String token = jwtEncoder.encode(JwtEncoderParameters.from(
@@ -116,7 +116,7 @@ class EmployeeControllerTest {
 
   @Test
   void findsEmployeesPageableAndOnlyForAuthenticatedCompany() throws Exception {
-    Company company = createCompany("Acme");
+    Company company = createCompany("Employee Listing Acme");
     Company anotherCompany = createCompany("Other Company");
     createEmployee(company,
       "Taylor Listing",
@@ -402,6 +402,42 @@ class EmployeeControllerTest {
       .andExpect(status().isConflict())
       .andExpect(jsonPath("$.message")
         .value("Employee number already registered for this company"));
+  }
+
+  @Test
+  void rejectsEmployeeEmailAlreadyRegisteredByAnotherCompany() throws Exception {
+    Company existingCompany = createCompany("Global Employee Email Owner");
+    Company authenticatedCompany = createCompany("Global Employee Email Conflict");
+    createEmployee(existingCompany,
+      "Existing Global Email",
+      "global.employee@example.com",
+      "EMP-GLOBAL-1");
+
+    mockMvc.perform(post("/api/employees")
+        .header("Authorization",
+          "Bearer " + tokenFor(authenticatedCompany))
+        .contentType(MediaType.APPLICATION_JSON)
+        .content("""
+          {
+            "fullName": "Conflicting Global Email",
+            "email": "global.employee@example.com",
+            "phoneNumber": "+351900000019",
+            "address": {
+              "street": "Global Conflict Street",
+              "city": "Lisbon",
+              "state": "Lisbon",
+              "zipCode": "1000-019"
+            },
+            "employeeNumber": "EMP-GLOBAL-2",
+            "position": "Engineer",
+            "department": "Product",
+            "admissionDate": "2026-01-10",
+            "status": "ACTIVE"
+          }
+          """))
+      .andExpect(status().isConflict())
+      .andExpect(jsonPath("$.message")
+        .value("Employee email already registered"));
   }
 
   private Company createCompany(String name) {

@@ -15,10 +15,10 @@ import java.util.UUID;
 @Entity
 @Table(
   name = "employees",
-  uniqueConstraints = @UniqueConstraint(
-    name = "uk_employees_company_number",
-    columnNames = {"company_id", "employee_number"}
-  )
+  uniqueConstraints = {
+    @UniqueConstraint(name = "uk_employees_company_number", columnNames = {"company_id", "employee_number"}),
+    @UniqueConstraint(name = "uk_employees_email", columnNames = "email")
+  }
 )
 @NoArgsConstructor
 public class Employee extends Person {
@@ -31,30 +31,30 @@ public class Employee extends Person {
   @JoinColumn(name = "company_id", nullable = false)
   private Company company;
 
-  @Column(name = "employee_number", nullable = false, length = 100)
+  @Column(name = "employee_number", length = 100)
   private String employeeNumber;
 
   @Column(nullable = false)
   private boolean enable = false;
 
-  @Column(nullable = false, length = 150)
+  @Column(length = 150)
   private String position;
 
-  @Column(nullable = false, length = 150)
+  @Column(length = 150)
   private String department;
 
-  @Column(name = "admission_date", nullable = false)
+  @Column(name = "admission_date")
   private LocalDate admissionDate;
 
   @Column(name = "termination_date")
   private LocalDate terminationDate;
 
   @Enumerated(EnumType.STRING)
-  @Column(nullable = false, length = 32)
+  @Column(length = 32)
   private EmployeeStatus status;
 
   @Enumerated(EnumType.STRING)
-  @Column(nullable = false, length = 32)
+  @Column(length = 32)
   private PaymentMethod paymentMethod;
 
   private BigDecimal paymentAmount;
@@ -91,6 +91,28 @@ public class Employee extends Person {
     this.status = status;
     this.paymentMethod = paymentMethod;
     this.paymentAmount = paymentAmount;
+  }
+
+  public static Employee incomplete(String fullName,
+    String email,
+    Company company) {
+    return new Employee(
+      fullName,
+      email,
+      null,
+      null,
+      null,
+      null,
+      company,
+      null,
+      null,
+      null,
+      null,
+      null,
+      EmployeeStatus.ACTIVE,
+      null,
+      null
+    );
   }
 
   public void updateEmploymentDetails(
