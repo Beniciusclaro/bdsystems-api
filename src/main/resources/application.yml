@@ -21,6 +21,24 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
 
+  mail:
+    host: ${SMTP_HOST:localhost}
+    port: ${SMTP_PORT:1025}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${SMTP_AUTH:false}
+          starttls:
+            enable: ${SMTP_STARTTLS:false}
+
+app:
+  frontend:
+    base-url: ${FRONTEND_BASE_URL:http://localhost:5173}
+  mail:
+    from: ${SMTP_FROM:no-reply@bdsystems.local}
+
 security:
   jwt:
     secret: ${JWT_SECRET:4G3OwI4gP+8aSljRtN4CIvqpvZSmlwevkLzbaioJ+b4=}

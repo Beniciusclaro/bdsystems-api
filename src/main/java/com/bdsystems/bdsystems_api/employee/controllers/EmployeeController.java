@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 @RestController
@@ -85,6 +86,16 @@ public class EmployeeController {
       id,
       companyIdFrom(jwt));
     return ResponseEntity.noContent().build();
+  }
+
+  @PostMapping("/{id}/user-invitation/resend")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void resendUserInvitation(
+    @PathVariable UUID id,
+    @AuthenticationPrincipal Jwt jwt
+  ) {
+    employeeService.resendInvitation(id,
+      companyIdFrom(jwt));
   }
 
   private UUID companyIdFrom(Jwt jwt) {

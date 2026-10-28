@@ -52,4 +52,29 @@ public class User extends Person {
     this.company = company;
     this.employee = employee;
   }
+
+  public static User invited(
+    String name,
+    String email,
+    String unusablePassword,
+    Role role,
+    Company company,
+    Employee employee
+  ) {
+    User user = new User(null,
+      name,
+      email,
+      unusablePassword,
+      role,
+      null,
+      company,
+      employee);
+    user.deactivate();
+    return user;
+  }
+
+  public void acceptInvitation(String encodedPassword) {
+    this.password = encodedPassword;
+    activate();
+  }
 }

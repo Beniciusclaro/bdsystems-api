@@ -2,9 +2,11 @@ package com.bdsystems.bdsystems_api.auth.controllers;
 
 import com.bdsystems.bdsystems_api.auth.domains.dtos.LoginRequest;
 import com.bdsystems.bdsystems_api.auth.domains.dtos.LoginResponse;
+import com.bdsystems.bdsystems_api.auth.domains.dtos.InvitationAcceptanceRequest;
 import com.bdsystems.bdsystems_api.auth.domains.dtos.UserRequest;
 import com.bdsystems.bdsystems_api.auth.domains.dtos.UserResponse;
 import com.bdsystems.bdsystems_api.auth.services.AuthenticationService;
+import com.bdsystems.bdsystems_api.auth.services.UserInvitationService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -17,11 +19,14 @@ import org.springframework.web.bind.annotation.*;
 public class AuthenticationController {
 
   private final AuthenticationService service;
+  private final UserInvitationService invitationService;
 
   public AuthenticationController(
-    AuthenticationService service
+    AuthenticationService service,
+    UserInvitationService invitationService
   ) {
     this.service = service;
+    this.invitationService = invitationService;
   }
 
   @PostMapping("/register")
@@ -38,6 +43,15 @@ public class AuthenticationController {
   @PostMapping("/login")
   public LoginResponse login(@RequestBody LoginRequest request) {
     return service.login(request);
+  }
+
+  @PostMapping("/invitations/accept")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void acceptInvitation(
+    @Valid @RequestBody InvitationAcceptanceRequest request
+  ) {
+    invitationService.accept(request.token(),
+      request.password());
   }
 
   @PostMapping("/logout")

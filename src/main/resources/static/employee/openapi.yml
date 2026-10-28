@@ -85,7 +85,7 @@ paths:
       tags:
         - Employee
       summary: Register an employee
-      description: Creates an employee linked to the company identified by the authenticated JWT tenant_id claim.
+      description: Creates an employee linked to the company identified by the authenticated JWT tenant_id claim. When userRole is supplied, also creates an inactive linked user and sends a one-time invitation valid for 24 hours. Omitting userRole preserves employee-only creation.
       operationId: createEmployee
       security:
         - bearerAuth: [ ]
@@ -111,6 +111,7 @@ paths:
               department: Product
               admissionDate: "2025-01-10"
               status: ACTIVE
+              userRole: USER
       responses:
         '201':
           description: Employee successfully registered
@@ -125,7 +126,7 @@ paths:
         '404':
           description: Company not found
         '409':
-          description: Employee number already registered for this company
+          description: Employee number or employee/user email already registered
   /api/employees/{id}:
     delete:
       tags:
@@ -193,6 +194,34 @@ paths:
           description: Employee not found for the authenticated company
         '409':
           description: Employee number or email conflict, or attempted deactivation of an employee linked to an active user
+
+  /api/employees/{id}/user-invitation/resend:
+    post:
+      tags:
+        - Employee
+      summary: Resend an employee user invitation
+      description: Invalidates any previous unconsumed invitation and sends a new 24-hour invitation. Only an inactive linked user in the authenticated tenant is eligible.
+      operationId: resendEmployeeUserInvitation
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Invitation replaced and sent
+        '401':
+          description: Authentication required
+        '403':
+          description: JWT does not contain a valid tenant_id
+        '404':
+          description: Employee not found in this tenant or employee has no linked user
+        '409':
+          description: Linked user is already active
 
 components:
   securitySchemes:
@@ -272,6 +301,14 @@ components:
         paymentAmount:
           type: number
           nullable: true
+        userRole:
+          type: string
+          enum:
+            - USER
+            - MANAGER
+            - ADMIN
+          nullable: true
+          description: Optional role for creating a linked inactive user. Ignored by employee updates; role editing is not supported.
 
     AddressRequest:
       type: object
@@ -354,6 +391,20 @@ components:
         paymentAmount:
           type: number
           nullable: true
+        userRole:
+          type: string
+          enum:
+            - USER
+            - MANAGER
+            - ADMIN
+          nullable: true
+        userAccessStatus:
+          type: string
+          enum:
+            - NONE
+            - PENDING
+            - EXPIRED
+            - ACTIVE
 
     EmployeePage:
       type: object

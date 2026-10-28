@@ -29,6 +29,7 @@ public class UserRegistrationService implements UserDetailsService {
     return org.springframework.security.core.userdetails.User
       .withUsername(user.getEmail())
       .password(user.getPassword())
+      .disabled(!user.isActive())
       .authorities("USER")
       .build();
   }

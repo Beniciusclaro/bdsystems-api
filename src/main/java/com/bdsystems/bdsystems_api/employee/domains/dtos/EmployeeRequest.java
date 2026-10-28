@@ -2,6 +2,7 @@ package com.bdsystems.bdsystems_api.employee.domains.dtos;
 
 import com.bdsystems.bdsystems_api.employee.domains.entities.EmployeeStatus;
 import com.bdsystems.bdsystems_api.employee.domains.entities.PaymentMethod;
+import com.bdsystems.bdsystems_api.auth.domains.entities.Role;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -24,7 +25,8 @@ public record EmployeeRequest(
   LocalDate terminationDate,
   EmployeeStatus status,
   PaymentMethod paymentMethod,
-  BigDecimal paymentAmount
+  BigDecimal paymentAmount,
+  Role userRole
 ) {
 
   public record AddressRequest(

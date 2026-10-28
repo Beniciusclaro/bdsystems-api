@@ -86,6 +86,14 @@ public abstract class Person {
     this.address = address;
   }
 
+  public void activate() {
+    this.active = true;
+  }
+
+  public void deactivate() {
+    this.active = false;
+  }
+
   @PrePersist
   protected void onCreate() {
     if (createdDate == null) {

@@ -2,9 +2,11 @@ package com.bdsystems.bdsystems_api.employee.services;
 
 import com.bdsystems.bdsystems_api.auth.domains.entities.Address;
 import com.bdsystems.bdsystems_api.auth.domains.entities.Company;
+import com.bdsystems.bdsystems_api.auth.domains.entities.User;
 import com.bdsystems.bdsystems_api.auth.repositories.AddressRepository;
 import com.bdsystems.bdsystems_api.auth.repositories.CompanyRepository;
 import com.bdsystems.bdsystems_api.auth.repositories.UserRepository;
+import com.bdsystems.bdsystems_api.auth.services.UserInvitationService;
 import com.bdsystems.bdsystems_api.employee.domains.dtos.EmployeeRequest;
 import com.bdsystems.bdsystems_api.employee.domains.dtos.EmployeeResponse;
 import com.bdsystems.bdsystems_api.employee.domains.entities.Employee;
@@ -14,6 +16,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -26,17 +29,23 @@ public class EmployeeService {
   private final CompanyRepository companyRepository;
   private final AddressRepository addressRepository;
   private final UserRepository userRepository;
+  private final PasswordEncoder passwordEncoder;
+  private final UserInvitationService invitationService;
 
   public EmployeeService(
     EmployeeRepository employeeRepository,
     CompanyRepository companyRepository,
     AddressRepository addressRepository,
-    UserRepository userRepository
+    UserRepository userRepository,
+    PasswordEncoder passwordEncoder,
+    UserInvitationService invitationService
   ) {
     this.employeeRepository = employeeRepository;
     this.companyRepository = companyRepository;
     this.addressRepository = addressRepository;
     this.userRepository = userRepository;
+    this.passwordEncoder = passwordEncoder;
+    this.invitationService = invitationService;
   }
 
   @Transactional
@@ -90,7 +99,26 @@ public class EmployeeService {
       request.paymentAmount()
     );
 
-    return toResponse(employeeRepository.save(employee));
+    employee = employeeRepository.save(employee);
+    if (request.userRole() != null) {
+      if (userRepository.existsByEmail(request.email())) {
+        throw new ResponseStatusException(
+          HttpStatus.CONFLICT,
+          "Email already registered"
+        );
+      }
+      User user = userRepository.save(User.invited(
+        request.fullName(),
+        request.email(),
+        passwordEncoder.encode(UUID.randomUUID().toString()),
+        request.userRole(),
+        company,
+        employee
+      ));
+      invitationService.createAndSend(user);
+    }
+
+    return toResponse(employee);
   }
 
   @Transactional
@@ -226,12 +254,30 @@ public class EmployeeService {
       .map(this::toResponse);
   }
 
+  @Transactional
+  public void resendInvitation(UUID employeeId,
+    UUID companyId) {
+    Employee employee = employeeRepository.findByIdAndCompanyIdAndEnableFalse(employeeId,
+        companyId)
+      .orElseThrow(() -> new ResponseStatusException(
+        HttpStatus.NOT_FOUND,
+        "Employee not found"
+      ));
+    User user = userRepository.findByEmployeeId(employee.getId())
+      .orElseThrow(() -> new ResponseStatusException(
+        HttpStatus.NOT_FOUND,
+        "Employee does not have user access"
+      ));
+    invitationService.resend(user);
+  }
+
   private String normalizeFilter(String value) {
     return value == null || value.isBlank() ? "" : value.trim();
   }
 
   private EmployeeResponse toResponse(Employee employee) {
     var address = employee.getAddress();
+    User linkedUser = userRepository.findByEmployeeId(employee.getId()).orElse(null);
 
     return new EmployeeResponse(
       employee.getId(),
@@ -254,7 +300,9 @@ public class EmployeeService {
       employee.getTerminationDate(),
       employee.getStatus(),
       employee.getPaymentMethod(),
-      employee.getPaymentAmount()
+      employee.getPaymentAmount(),
+      linkedUser == null ? null : linkedUser.getRole(),
+      invitationService.statusFor(linkedUser)
     );
   }
 }

@@ -67,6 +67,28 @@ paths:
         '401':
           description: Invalid credentials
 
+  /api/auth/invitations/accept:
+    post:
+      tags:
+        - Authentication
+      summary: Accept a user invitation
+      description: Consumes a valid one-time invitation, stores the BCrypt password, and activates the user. Invitations expire after 24 hours.
+      operationId: acceptUserInvitation
+      security: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvitationAcceptanceRequest'
+      responses:
+        '204':
+          description: Invitation accepted and user activated
+        '400':
+          description: Invalid or already consumed invitation
+        '410':
+          description: Invitation exists but has expired
+
 components:
   securitySchemes:
     bearerAuth:
@@ -158,3 +180,16 @@ components:
         token:
           type: string
           example: jwt-token
+
+    InvitationAcceptanceRequest:
+      type: object
+      required:
+        - token
+        - password
+      properties:
+        token:
+          type: string
+          description: Opaque one-time token received by email.
+        password:
+          type: string
+          format: password
