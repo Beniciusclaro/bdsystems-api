@@ -89,6 +89,48 @@ paths:
         '410':
           description: Invitation exists but has expired
 
+  /api/auth/password-reset/request:
+    post:
+      tags:
+        - Authentication
+      summary: Request a password reset email
+      description: Always returns the same response. Active accounts receive a one-time link valid for one hour; inactive or unknown accounts do not receive an email.
+      operationId: requestPasswordReset
+      security: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetRequest'
+      responses:
+        '204':
+          description: Request accepted regardless of account existence or activity
+        '400':
+          description: Invalid request payload
+
+  /api/auth/password-reset/confirm:
+    post:
+      tags:
+        - Authentication
+      summary: Confirm a password reset
+      description: Replaces the BCrypt password using a valid one-time token and invalidates all other pending reset tokens for the user.
+      operationId: confirmPasswordReset
+      security: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetConfirmationRequest'
+      responses:
+        '204':
+          description: Password reset completed
+        '400':
+          description: Invalid payload or invalid/already consumed token
+        '410':
+          description: Token exists but has expired
+
 components:
   securitySchemes:
     bearerAuth:
@@ -137,6 +179,7 @@ components:
         password:
           type: string
           format: password
+          minLength: 8
           example: MyPassword123!
         company:
           $ref: '#/components/schemas/CompanyRequest'
@@ -193,3 +236,27 @@ components:
         password:
           type: string
           format: password
+          minLength: 8
+
+    PasswordResetRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+
+    PasswordResetConfirmationRequest:
+      type: object
+      required:
+        - token
+        - password
+      properties:
+        token:
+          type: string
+          description: Opaque one-time token received by email.
+        password:
+          type: string
+          format: password
+          minLength: 8

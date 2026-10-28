@@ -77,4 +77,8 @@ public class User extends Person {
     this.password = encodedPassword;
     activate();
   }
+
+  public void updatePassword(String encodedPassword) {
+    this.password = encodedPassword;
+  }
 }
