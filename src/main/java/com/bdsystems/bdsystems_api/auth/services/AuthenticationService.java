@@ -34,6 +34,7 @@ public class AuthenticationService {
 
   private final JwtService jwtService;
   private final AuthenticationManager authenticationManager;
+  private final RefreshSessionService refreshSessionService;
 
   public AuthenticationService(
     CompanyRepository companyRepository,
@@ -42,7 +43,8 @@ public class AuthenticationService {
     AddressRepository addressRepository,
     EmployeeRepository employeeRepository,
     JwtService jwtService,
-    AuthenticationManager authenticationManager
+    AuthenticationManager authenticationManager,
+    RefreshSessionService refreshSessionService
   ) {
     this.companyRepository = companyRepository;
     this.userRepository = userRepository;
@@ -51,10 +53,11 @@ public class AuthenticationService {
     this.employeeRepository = employeeRepository;
     this.jwtService = jwtService;
     this.authenticationManager = authenticationManager;
+    this.refreshSessionService = refreshSessionService;
   }
 
   @Transactional
-  public UserResponse register(
+  public AuthenticationResult register(
     UserRequest request
   ) {
     if (userRepository.existsByEmail(request.email())) {
@@ -94,14 +97,12 @@ public class AuthenticationService {
 
     user = userRepository.save(user);
 
-    String jwtToken = jwtService.generateToken(user);
-
-    return new UserResponse(
-      jwtToken
-    );
+    return refreshSessionService.create(user,
+      false);
   }
 
-  public LoginResponse login(LoginRequest request) {
+  @Transactional
+  public AuthenticationResult login(LoginRequest request) {
 
     authenticationManager.authenticate(
       new UsernamePasswordAuthenticationToken(
@@ -114,8 +115,15 @@ public class AuthenticationService {
         request.email())
       .orElseThrow(() ->
         new UsernameNotFoundException("User not found"));
-    String token = jwtService.generateToken(user);
+    return refreshSessionService.create(user,
+      Boolean.TRUE.equals(request.rememberMe()));
+  }
 
-    return new LoginResponse(token);
+  public AuthenticationResult refresh(String refreshToken) {
+    return refreshSessionService.refresh(refreshToken);
+  }
+
+  public void logout(String refreshToken) {
+    refreshSessionService.revoke(refreshToken);
   }
 }

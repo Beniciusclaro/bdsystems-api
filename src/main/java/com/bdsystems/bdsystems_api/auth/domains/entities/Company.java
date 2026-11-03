@@ -22,6 +22,9 @@ public class Company {
   @Column(name = "created_at", nullable = false)
   private Instant createdAt;
 
+  @Column(nullable = false)
+  private boolean active = true;
+
   @OneToOne(optional = false)
   @JoinColumn(name = "address_id", nullable = false, unique = true)
   private Address address;

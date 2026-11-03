@@ -17,6 +17,9 @@ security:
   jwt:
     secret: test-secret-that-is-at-least-thirty-two-bytes-long
     issuer: bdsystems-api
+    access-token-duration: 15m
+    refresh-session-duration: 12h
+    refresh-cookie-secure: false
 
 app:
   frontend:

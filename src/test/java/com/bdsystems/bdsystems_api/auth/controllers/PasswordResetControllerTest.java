@@ -4,6 +4,7 @@ import com.bdsystems.bdsystems_api.auth.domains.dtos.UserRequest;
 import com.bdsystems.bdsystems_api.auth.domains.entities.PasswordResetToken;
 import com.bdsystems.bdsystems_api.auth.domains.entities.User;
 import com.bdsystems.bdsystems_api.auth.repositories.PasswordResetTokenRepository;
+import com.bdsystems.bdsystems_api.auth.repositories.RefreshSessionRepository;
 import com.bdsystems.bdsystems_api.auth.repositories.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.mail.Session;
@@ -60,6 +61,9 @@ class PasswordResetControllerTest {
   private PasswordEncoder passwordEncoder;
 
   @Autowired
+  private RefreshSessionRepository refreshSessionRepository;
+
+  @Autowired
   private TestMailSender mailSender;
 
   private final ObjectMapper objectMapper = new ObjectMapper();
@@ -92,6 +96,9 @@ class PasswordResetControllerTest {
     confirmReset(token,
       NEW_PASSWORD)
       .andExpect(status().isNoContent());
+    assertTrue(refreshSessionRepository.findAll().stream()
+      .filter(refreshSession -> refreshSession.getUser().getId().equals(user.getId()))
+      .allMatch(refreshSession -> refreshSession.getRevokedAt() != null));
 
     User updatedUser = userRepository.findById(user.getId()).orElseThrow();
     assertFalse(passwordEncoder.matches(OLD_PASSWORD,

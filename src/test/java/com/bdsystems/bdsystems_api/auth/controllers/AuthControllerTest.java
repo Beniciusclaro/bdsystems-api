@@ -4,6 +4,7 @@ import com.bdsystems.bdsystems_api.auth.domains.dtos.UserRequest;
 import com.bdsystems.bdsystems_api.auth.domains.entities.Role;
 import com.bdsystems.bdsystems_api.auth.repositories.AddressRepository;
 import com.bdsystems.bdsystems_api.auth.repositories.CompanyRepository;
+import com.bdsystems.bdsystems_api.auth.repositories.RefreshSessionRepository;
 import com.bdsystems.bdsystems_api.auth.repositories.UserRepository;
 import com.bdsystems.bdsystems_api.employee.domains.entities.EmployeeStatus;
 import com.bdsystems.bdsystems_api.employee.repositories.EmployeeRepository;
@@ -14,9 +15,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import jakarta.servlet.http.Cookie;
+import org.springframework.mock.web.MockCookie;
+
+import java.time.Duration;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -26,6 +32,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -49,6 +57,12 @@ class AuthControllerTest {
 
   @Autowired
   private JwtDecoder jwtDecoder;
+
+  @Autowired
+  private RefreshSessionRepository refreshSessionRepository;
+
+  @Autowired
+  private JdbcTemplate jdbcTemplate;
 
   private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -79,7 +93,7 @@ class AuthControllerTest {
       jwtDecoder.decode(token).getClaimAsString("employee_id"));
 
     mockMvc.perform(post("/api/auth/logout"))
-      .andExpect(status().isUnauthorized());
+      .andExpect(status().isNoContent());
 
     MvcResult loginResult = mockMvc.perform(post("/api/auth/login")
         .contentType(MediaType.APPLICATION_JSON)
@@ -94,6 +108,70 @@ class AuthControllerTest {
     mockMvc.perform(post("/api/auth/logout").header("Authorization",
         "Bearer " + loginToken))
       .andExpect(status().isNoContent());
+  }
+
+  @Test
+  void createsIndependentFixedRefreshSessionsAndRevokesOnlyCurrentSession() throws Exception {
+    MvcResult registration = registerResult("Refresh Sessions Company",
+      "refresh.sessions@example.com");
+    Cookie firstCookie = registration.getResponse().getCookie("refresh_token");
+    assertTrue(firstCookie.isHttpOnly());
+    assertFalse(firstCookie.getSecure());
+    assertEquals("/api/auth",
+      firstCookie.getPath());
+    assertEquals(-1,
+      firstCookie.getMaxAge());
+    assertTrue(registration.getResponse().getHeader("Set-Cookie").contains("SameSite=Lax"));
+    assertFalse(registration.getResponse().getHeader("Set-Cookie").contains("Domain="));
+    assertEquals(900,
+      objectMapper.readTree(registration.getResponse().getContentAsString()).path("expiresInSeconds").asLong());
+    var registrationJwt = jwtDecoder.decode(objectMapper.readTree(registration.getResponse().getContentAsString())
+      .path("token").asText());
+    assertEquals(Duration.ofMinutes(15),
+      Duration.between(registrationJwt.getIssuedAt(),
+        registrationJwt.getExpiresAt()));
+
+    MvcResult secondLogin = mockMvc.perform(post("/api/auth/login")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content("""
+          {"email":"refresh.sessions@example.com","password":"%s","rememberMe":true}
+          """.formatted(PASSWORD)))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.expiresInSeconds").value(900))
+      .andReturn();
+    Cookie secondCookie = secondLogin.getResponse().getCookie("refresh_token");
+    assertTrue(secondCookie.getMaxAge() > 0);
+    assertTrue(secondCookie.getMaxAge() <= Duration.ofHours(12).toSeconds());
+
+    var expiryBySession = refreshSessionRepository.findAll().stream()
+      .collect(java.util.stream.Collectors.toMap(refreshSession -> refreshSession.getId(),
+        refreshSession -> refreshSession.getExpiresAt()));
+
+    mockMvc.perform(post("/api/auth/refresh").cookie(firstCookie))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.expiresInSeconds").value(900));
+    refreshSessionRepository.findAll().forEach(refreshSession -> assertEquals(expiryBySession.get(refreshSession.getId()),
+      refreshSession.getExpiresAt()));
+
+    mockMvc.perform(post("/api/auth/logout").cookie(firstCookie))
+      .andExpect(status().isNoContent())
+      .andExpect(result -> assertEquals(0,
+        result.getResponse().getCookie("refresh_token").getMaxAge()));
+    mockMvc.perform(post("/api/auth/refresh").cookie(firstCookie))
+      .andExpect(status().isUnauthorized());
+    mockMvc.perform(post("/api/auth/refresh").cookie(secondCookie))
+      .andExpect(status().isOk());
+
+    jdbcTemplate.update("update refresh_sessions set expires_at = ?",
+      java.sql.Timestamp.from(java.time.Instant.now().minusSeconds(1)));
+    mockMvc.perform(post("/api/auth/refresh").cookie(secondCookie))
+      .andExpect(status().isUnauthorized());
+
+    mockMvc.perform(post("/api/auth/logout").cookie(new MockCookie("refresh_token",
+        "invalid")))
+      .andExpect(status().isNoContent());
+    mockMvc.perform(post("/api/auth/refresh"))
+      .andExpect(status().isUnauthorized());
   }
 
   @Test
@@ -248,6 +326,15 @@ class AuthControllerTest {
 
   private String register(String companyName,
     String email) throws Exception {
+    MvcResult result = registerResult(companyName,
+      email);
+    JsonNode response = objectMapper.readTree(result.getResponse().getContentAsString());
+    org.junit.jupiter.api.Assertions.assertTrue(response.path("token").isTextual());
+    return response.path("token").asText();
+  }
+
+  private MvcResult registerResult(String companyName,
+    String email) throws Exception {
     UserRequest request = new UserRequest(
       "Acme Owner",
       email,
@@ -268,9 +355,7 @@ class AuthControllerTest {
       .andExpect(jsonPath("$.token").isNotEmpty())
       .andReturn();
 
-    JsonNode response = objectMapper.readTree(result.getResponse().getContentAsString());
-    org.junit.jupiter.api.Assertions.assertTrue(response.path("token").isTextual());
-    return response.path("token").asText();
+    return result;
   }
 
   private void registerExpectingConflict(String companyName,

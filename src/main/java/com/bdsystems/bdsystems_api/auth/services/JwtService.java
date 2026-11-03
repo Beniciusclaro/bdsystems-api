@@ -10,16 +10,20 @@ import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.time.Duration;
 
 @Service
 public class JwtService {
 
   private final JwtEncoder jwtEncoder;
+  private final Duration accessTokenDuration;
   @Value("${security.jwt.issuer}")
   private String issuer;
 
-  public JwtService(JwtEncoder jwtEncoder) {
+  public JwtService(JwtEncoder jwtEncoder,
+    @Value("${security.jwt.access-token-duration}") Duration accessTokenDuration) {
     this.jwtEncoder = jwtEncoder;
+    this.accessTokenDuration = accessTokenDuration;
 
   }
 
@@ -30,7 +34,7 @@ public class JwtService {
     JwtClaimsSet claims = JwtClaimsSet.builder()
       .issuer(issuer)
       .issuedAt(now)
-      .expiresAt(now.plusSeconds(3600))
+      .expiresAt(now.plus(accessTokenDuration))
       .subject(user.getId().toString())
       .claim(
         "tenant_id",
@@ -54,5 +58,9 @@ public class JwtService {
       JwtEncoderParameters.from(header,
         claims)
     ).getTokenValue();
+  }
+
+  public long expiresInSeconds() {
+    return accessTokenDuration.toSeconds();
   }
 }

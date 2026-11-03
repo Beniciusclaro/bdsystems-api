@@ -53,19 +53,34 @@ paths:
         '401':
           description: Invalid credentials
 
+  /api/auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Renew the access token using the HttpOnly refresh cookie
+      operationId: refresh
+      security: [ ]
+      responses:
+        '200':
+          description: Access token renewed without extending the absolute refresh-session expiry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Refresh cookie or session is absent, expired, revoked, or belongs to an inactive account
+
   /api/auth/logout:
     post:
       tags:
         - Authentication
       summary: Logout user
       operationId: logout
-      security:
-        - bearerAuth: [ ]
+      description: Idempotently revokes only the session identified by the refresh cookie and clears that cookie.
+      security: [ ]
       responses:
         '204':
           description: Logout successful
-        '401':
-          description: Invalid credentials
 
   /api/auth/invitations/accept:
     post:
@@ -144,6 +159,7 @@ components:
       required:
         - email
         - password
+        - rememberMe
       properties:
         email:
           type: string
@@ -153,6 +169,9 @@ components:
           type: string
           format: password
           example: "123456"
+        rememberMe:
+          type: boolean
+          description: Persist the refresh cookie until the fixed 12-hour session expiry.
 
     LoginResponse:
       type: object
@@ -160,6 +179,10 @@ components:
         token:
           type: string
           example: jwt-token
+        expiresInSeconds:
+          type: integer
+          format: int64
+          example: 900
 
     UserRequest:
       type: object
@@ -223,6 +246,10 @@ components:
         token:
           type: string
           example: jwt-token
+        expiresInSeconds:
+          type: integer
+          format: int64
+          example: 900
 
     InvitationAcceptanceRequest:
       type: object

@@ -46,6 +46,8 @@ public class SecurityConfig {
         .requestMatchers(
           "/api/auth/register",
           "/api/auth/login",
+          "/api/auth/refresh",
+          "/api/auth/logout",
           "/api/auth/invitations/accept",
           "/api/auth/password-reset/request",
           "/api/auth/password-reset/confirm",
@@ -62,9 +64,6 @@ public class SecurityConfig {
           "/test"
         )
         .permitAll()
-        .requestMatchers(
-          "/api/auth/logout"
-        ).authenticated()
         .anyRequest().authenticated()
       )
       .oauth2ResourceServer(oauth2 ->
@@ -101,6 +100,7 @@ public class SecurityConfig {
     ));
 
     configuration.setAllowedHeaders(List.of("*"));
+    configuration.setAllowCredentials(true);
 
     UrlBasedCorsConfigurationSource source =
       new UrlBasedCorsConfigurationSource();

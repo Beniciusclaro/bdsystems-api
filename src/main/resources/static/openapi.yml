@@ -24,6 +24,8 @@ paths:
     $ref: './auth/openapi.yml#/paths/~1api~1auth~1register'
   /api/auth/login:
     $ref: './auth/openapi.yml#/paths/~1api~1auth~1login'
+  /api/auth/refresh:
+    $ref: './auth/openapi.yml#/paths/~1api~1auth~1refresh'
   /api/auth/logout:
     $ref: './auth/openapi.yml#/paths/~1api~1auth~1logout'
   /api/auth/invitations/accept:

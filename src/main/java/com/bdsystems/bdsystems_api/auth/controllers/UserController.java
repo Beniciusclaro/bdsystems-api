@@ -20,6 +20,8 @@ public class UserController {
 
   @PostMapping("/login")
   public LoginResponse login(@RequestBody LoginRequest request) {
-    return authenticationService.login(request);
+    var result = authenticationService.login(request);
+    return new LoginResponse(result.accessToken(),
+      result.expiresInSeconds());
   }
 }

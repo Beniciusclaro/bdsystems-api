@@ -4,6 +4,7 @@ import com.bdsystems.bdsystems_api.auth.domains.entities.PasswordResetToken;
 import com.bdsystems.bdsystems_api.auth.domains.entities.User;
 import com.bdsystems.bdsystems_api.auth.repositories.PasswordResetTokenRepository;
 import com.bdsystems.bdsystems_api.auth.repositories.UserRepository;
+import com.bdsystems.bdsystems_api.auth.repositories.RefreshSessionRepository;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.transaction.Transactional;
@@ -41,6 +42,7 @@ public class PasswordResetService {
   private final Clock clock;
   private final String frontendBaseUrl;
   private final String mailFrom;
+  private final RefreshSessionRepository refreshSessionRepository;
 
   public PasswordResetService(
     PasswordResetTokenRepository resetTokenRepository,
@@ -48,7 +50,8 @@ public class PasswordResetService {
     PasswordEncoder passwordEncoder,
     JavaMailSender mailSender,
     @Value("${app.frontend.base-url}") String frontendBaseUrl,
-    @Value("${app.mail.from}") String mailFrom
+    @Value("${app.mail.from}") String mailFrom,
+    RefreshSessionRepository refreshSessionRepository
   ) {
     this.resetTokenRepository = resetTokenRepository;
     this.userRepository = userRepository;
@@ -56,6 +59,7 @@ public class PasswordResetService {
     this.mailSender = mailSender;
     this.frontendBaseUrl = frontendBaseUrl;
     this.mailFrom = mailFrom;
+    this.refreshSessionRepository = refreshSessionRepository;
     this.secureRandom = new SecureRandom();
     this.clock = Clock.systemUTC();
   }
@@ -84,6 +88,8 @@ public class PasswordResetService {
     resetTokenRepository.invalidateUnconsumedByUserId(user.getId(),
       now);
     userRepository.save(user);
+    refreshSessionRepository.revokeAllByUserId(user.getId(),
+      now);
   }
 
   private void createAndSend(User user) {

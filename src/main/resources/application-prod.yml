@@ -1,0 +1,3 @@
+security:
+  jwt:
+    refresh-cookie-secure: true

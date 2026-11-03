@@ -43,6 +43,9 @@ security:
   jwt:
     secret: ${JWT_SECRET:4G3OwI4gP+8aSljRtN4CIvqpvZSmlwevkLzbaioJ+b4=}
     issuer: bdsystems-api
+    access-token-duration: 15m
+    refresh-session-duration: 12h
+    refresh-cookie-secure: ${REFRESH_COOKIE_SECURE:false}
 
 springdoc:
   swagger-ui:
