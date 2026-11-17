@@ -52,6 +52,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -330,6 +331,40 @@ class PlanningFiltersIntegrationTest {
       .andExpect(status().isBadRequest());
   }
 
+  @Test
+  void listsAllThirteenBudgetsWithoutProjectsUsingRequestedPageSizeAndNewestFirst() throws Exception {
+    Company company = createCompany("Budget page");
+    Client client = createClient(company,
+      "Budget page client");
+    for (int budgetNumber = 1; budgetNumber <= 13; budgetNumber++) {
+      createBudget(company,
+        client,
+        null,
+        "BUDGET-" + budgetNumber,
+        "Budget " + budgetNumber,
+        "Project " + budgetNumber,
+        BudgetStatus.DRAFT);
+      budgetRepository.flush();
+    }
+
+    mockMvc.perform(get("/api/budgets")
+        .param("page",
+          "0")
+        .param("size",
+          "50")
+        .param("sort",
+          "createdAt,desc")
+        .header("Authorization",
+          "Bearer " + tokenFor(company)))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.content.length()").value(13))
+      .andExpect(jsonPath("$.content[0].number").value("BUDGET-13"))
+      .andExpect(jsonPath("$.page.size").value(50))
+      .andExpect(jsonPath("$.page.number").value(0))
+      .andExpect(jsonPath("$.page.totalElements").value(13))
+      .andExpect(jsonPath("$.page.totalPages").value(1));
+  }
+
   private void assertBudgetSearch(Company company,
     String search,
     Budget expectedBudget) {
@@ -467,6 +502,7 @@ class PlanningFiltersIntegrationTest {
       null,
       LaborCostingMode.MANUAL,
       BigDecimal.TEN,
+      null,
       active);
     return laborRoleRepository.save(laborRole);
   }

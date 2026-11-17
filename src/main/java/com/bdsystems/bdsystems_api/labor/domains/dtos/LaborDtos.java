@@ -2,7 +2,6 @@ package com.bdsystems.bdsystems_api.labor.domains.dtos;
 
 import com.bdsystems.bdsystems_api.labor.domains.entities.LaborCostingMode;
 import com.bdsystems.bdsystems_api.employee.domains.entities.PaymentMethod;
-
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -21,6 +20,7 @@ public final class LaborDtos {
     String description,
     @NotNull LaborCostingMode costingMode,
     @DecimalMin("0") BigDecimal manualHourlyCost,
+    @Size(max = 150) String referencePosition,
     Boolean active
   ) {
   }
@@ -32,6 +32,7 @@ public final class LaborDtos {
     String description,
     LaborCostingMode costingMode,
     BigDecimal manualHourlyCost,
+    String referencePosition,
     BigDecimal currentHourlyCost,
     int eligibleEmployees,
     boolean active

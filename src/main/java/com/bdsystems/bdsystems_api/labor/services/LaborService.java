@@ -29,41 +29,47 @@ import java.util.UUID;
 
 @Service
 public class LaborService {
+  private static final BigDecimal MONTHS_PER_YEAR = BigDecimal.valueOf(12);
+  private static final BigDecimal WEEKS_PER_YEAR = BigDecimal.valueOf(52);
+  private static final BigDecimal MONTHLY_PRODUCTIVE_HOURS = BigDecimal.valueOf(160);
+  private static final BigDecimal MONTHLY_WORK_DAYS = BigDecimal.valueOf(22);
+
   private final LaborRoleRepository roles;
   private final EmployeeLaborCostRepository profiles;
   private final EmployeeRepository employees;
   private final CompanyRepository companies;
   private final LaborCostCalculator calculator;
 
-  public LaborService(LaborRoleRepository r,
-    EmployeeLaborCostRepository p,
-    EmployeeRepository e,
-    CompanyRepository c,
+  public LaborService(LaborRoleRepository roles,
+    EmployeeLaborCostRepository profiles,
+    EmployeeRepository employees,
+    CompanyRepository companies,
     LaborCostCalculator calculator) {
-    roles = r;
-    profiles = p;
-    employees = e;
-    companies = c;
+    this.roles = roles;
+    this.profiles = profiles;
+    this.employees = employees;
+    this.companies = companies;
     this.calculator = calculator;
   }
 
   @Transactional
-  public RoleResponse create(RoleRequest r,
-    UUID t) {
-    return save(new LaborRole(companies.findById(t).orElseThrow(() -> error(HttpStatus.FORBIDDEN,
-        "Authenticated company not found"))),
-      r,
-      t);
+  public RoleResponse create(RoleRequest request,
+    UUID tenantId) {
+    LaborRole laborRole = new LaborRole(companies.findById(tenantId).orElseThrow(() -> error(HttpStatus.FORBIDDEN,
+      "Authenticated company not found")));
+    return save(laborRole,
+      request,
+      tenantId);
   }
 
   @Transactional
   public RoleResponse update(UUID id,
-    RoleRequest r,
-    UUID t) {
+    RoleRequest request,
+    UUID tenantId) {
     return save(find(id,
-        t),
-      r,
-      t);
+        tenantId),
+      request,
+      tenantId);
   }
 
   @Transactional(readOnly = true)
@@ -76,6 +82,12 @@ public class LaborService {
       active,
       pageable).map(laborRole -> map(laborRole,
       tenantId));
+  }
+
+  @Transactional(readOnly = true)
+  public List<String> referencePositions(UUID tenantId) {
+    return employees.findEligibleReferencePositions(tenantId,
+      EmployeeStatus.ACTIVE);
   }
 
   @Transactional(readOnly = true)
@@ -93,135 +105,161 @@ public class LaborService {
 
   @Transactional
   public ProfileResponse saveProfile(UUID employeeId,
-    ProfileRequest r,
-    UUID t) {
-    Employee e = employees.findByIdAndCompanyIdAndEnableFalse(employeeId,
-      t).orElseThrow(() -> error(HttpStatus.NOT_FOUND,
+    ProfileRequest request,
+    UUID tenantId) {
+    Employee employee = employees.findByIdAndCompanyIdAndEnableFalse(employeeId,
+      tenantId).orElseThrow(() -> error(HttpStatus.NOT_FOUND,
       "Employee not found"));
-    LaborRole role = find(r.laborRoleId(),
-      t);
-    if (e.getPaymentMethod() == null || e.getPaymentAmount() == null) throw error(HttpStatus.BAD_REQUEST,
+    LaborRole laborRole = find(request.laborRoleId(),
+      tenantId);
+    if (employee.getPaymentMethod() == null || employee.getPaymentAmount() == null) throw error(HttpStatus.BAD_REQUEST,
       "Employee payment method and amount are required");
-    if (e.getPaymentMethod() == PaymentMethod.DAILY && r.workDaysMonth() == null) throw error(HttpStatus.BAD_REQUEST,
-      "Work days per month are required for daily payment");
-    EmployeeLaborCost p = profiles.findByEmployeeIdAndEmployeeCompanyId(employeeId,
-      t).orElseGet(() -> new EmployeeLaborCost(e));
-    p.update(role,
-      r.productiveHoursMonth(),
-      r.workDaysMonth(),
-      r.employerChargesPercent(),
-      r.monthlyBenefits(),
-      r.otherMonthlyCosts());
-    profiles.save(p);
-    return profileMap(p);
+    if (employee.getPaymentMethod() == PaymentMethod.DAILY && request.workDaysMonth() == null)
+      throw error(HttpStatus.BAD_REQUEST,
+        "Work days per month are required for daily payment");
+    EmployeeLaborCost profile = profiles.findByEmployeeIdAndEmployeeCompanyId(employeeId,
+      tenantId).orElseGet(() -> new EmployeeLaborCost(employee));
+    profile.update(laborRole,
+      request.productiveHoursMonth(),
+      request.workDaysMonth(),
+      request.employerChargesPercent(),
+      request.monthlyBenefits(),
+      request.otherMonthlyCosts());
+    profiles.save(profile);
+    return profileMap(profile);
   }
 
   @Transactional(readOnly = true)
   public ProfileResponse profile(UUID employeeId,
-    UUID t) {
+    UUID tenantId) {
     return profileMap(profiles.findByEmployeeIdAndEmployeeCompanyId(employeeId,
-      t).orElseThrow(() -> error(HttpStatus.NOT_FOUND,
+      tenantId).orElseThrow(() -> error(HttpStatus.NOT_FOUND,
       "Labor cost profile not found")));
   }
 
-  public BigDecimal hourlyCost(LaborRole role,
-    UUID t) {
-    if (role.getCostingMode() == LaborCostingMode.MANUAL) {
-      if (role.getManualHourlyCost() == null) throw error(HttpStatus.UNPROCESSABLE_ENTITY,
+  public BigDecimal hourlyCost(LaborRole laborRole,
+    UUID tenantId) {
+    if (laborRole.getCostingMode() == LaborCostingMode.MANUAL) {
+      if (laborRole.getManualHourlyCost() == null) throw error(HttpStatus.UNPROCESSABLE_ENTITY,
         "Manual hourly cost is missing");
-      return role.getManualHourlyCost();
+      return laborRole.getManualHourlyCost();
     }
-    List<EmployeeLaborCost> ps = eligible(role,
-      t);
-    if (ps.isEmpty()) throw error(HttpStatus.UNPROCESSABLE_ENTITY,
-      "Labor role has no eligible employee cost profiles");
-    return ps.stream().map(this::effective).reduce(BigDecimal.ZERO,
-      BigDecimal::add).divide(BigDecimal.valueOf(ps.size()),
+    List<Employee> eligibleEmployees = eligible(laborRole,
+      tenantId);
+    if (eligibleEmployees.isEmpty()) throw error(HttpStatus.UNPROCESSABLE_ENTITY,
+      "Labor role has no eligible employees");
+    return averageHourlyCost(eligibleEmployees);
+  }
+
+  private BigDecimal averageHourlyCost(List<Employee> eligibleEmployees) {
+    return eligibleEmployees.stream().map(this::employeeHourlyCost).reduce(BigDecimal.ZERO,
+      BigDecimal::add).divide(BigDecimal.valueOf(eligibleEmployees.size()),
       4,
       RoundingMode.HALF_UP);
   }
 
-  private RoleResponse save(LaborRole role,
-    RoleRequest r,
-    UUID t) {
-    if (r.costingMode() == LaborCostingMode.MANUAL && r.manualHourlyCost() == null) throw error(HttpStatus.BAD_REQUEST,
-      "Manual hourly cost is required");
-    if (roles.existsByCompanyIdAndCodeAndIdNot(t,
-      r.code().trim(),
-      role.getId() == null ? new UUID(0,
-        0) : role.getId())) throw error(HttpStatus.CONFLICT,
+  private RoleResponse save(LaborRole laborRole,
+    RoleRequest request,
+    UUID tenantId) {
+    validateCostSource(request);
+    if (roles.existsByCompanyIdAndCodeAndIdNot(tenantId,
+      request.code().trim(),
+      laborRole.getId() == null ? new UUID(0,
+        0) : laborRole.getId())) throw error(HttpStatus.CONFLICT,
       "Labor role code already registered");
-    role.update(r.code().trim(),
-      r.name().trim(),
-      r.description(),
-      r.costingMode(),
-      r.manualHourlyCost(),
-      r.active() == null || r.active());
-    roles.save(role);
-    return map(role,
-      t);
+    String referencePosition = request.referencePosition() == null ? null : request.referencePosition().trim();
+    laborRole.update(request.code().trim(),
+      request.name().trim(),
+      request.description(),
+      request.costingMode(),
+      request.manualHourlyCost(),
+      referencePosition,
+      request.active() == null || request.active());
+    roles.save(laborRole);
+    return map(laborRole,
+      tenantId);
+  }
+
+  private void validateCostSource(RoleRequest request) {
+    if (request.costingMode() == LaborCostingMode.MANUAL) {
+      if (request.manualHourlyCost() == null) throw error(HttpStatus.BAD_REQUEST,
+        "Manual hourly cost is required");
+      if (request.referencePosition() != null) throw error(HttpStatus.BAD_REQUEST,
+        "Reference position must be null for manual costing");
+      return;
+    }
+    if (request.manualHourlyCost() != null) throw error(HttpStatus.BAD_REQUEST,
+      "Manual hourly cost must be null for employee average costing");
+    if (request.referencePosition() == null || request.referencePosition().isBlank())
+      throw error(HttpStatus.BAD_REQUEST,
+        "Reference position is required for employee average costing");
   }
 
   public LaborRole find(UUID id,
-    UUID t) {
+    UUID tenantId) {
     return roles.findByIdAndCompanyId(id,
-      t).orElseThrow(() -> error(HttpStatus.NOT_FOUND,
+      tenantId).orElseThrow(() -> error(HttpStatus.NOT_FOUND,
       "Labor role not found"));
   }
 
-  private List<EmployeeLaborCost> eligible(LaborRole r,
-    UUID t) {
-    return profiles.findByLaborRoleIdAndEmployeeCompanyIdAndEmployeeEnableFalseAndEmployeeStatus(r.getId(),
-      t,
-      EmployeeStatus.ACTIVE).stream().filter(profile ->
-      profile.getEmployee().getEmployeeNumber() != null
-        && profile.getEmployee().getPosition() != null
-        && profile.getEmployee().getAdmissionDate() != null
-        && profile.getEmployee().getPaymentAmount() != null
-        && profile.getEmployee().getPaymentMethod() != null).toList();
+  private List<Employee> eligible(LaborRole laborRole,
+    UUID tenantId) {
+    if (laborRole.getCostingMode() != LaborCostingMode.EMPLOYEE_AVERAGE
+      || laborRole.getReferencePosition() == null
+      || laborRole.getReferencePosition().isBlank()) return List.of();
+    return employees.findEligibleForAverage(tenantId,
+      EmployeeStatus.ACTIVE,
+      laborRole.getReferencePosition());
   }
 
-  private BigDecimal effective(EmployeeLaborCost p) {
-    Employee e = p.getEmployee();
-    return calculator.hourlyCost(e.getPaymentMethod(),
-      e.getPaymentAmount(),
-      p.getProductiveHoursMonth(),
-      p.getWorkDaysMonth(),
-      p.getEmployerChargesPercent(),
-      p.getMonthlyBenefits(),
-      p.getOtherMonthlyCosts());
+  private BigDecimal employeeHourlyCost(Employee employee) {
+    return switch (employee.getPaymentMethod()) {
+      case MONTHLY -> employee.getPaymentAmount().divide(MONTHLY_PRODUCTIVE_HOURS,
+        12,
+        RoundingMode.HALF_UP);
+      case WEEKLY -> employee.getPaymentAmount().multiply(WEEKS_PER_YEAR).divide(MONTHS_PER_YEAR,
+        12,
+        RoundingMode.HALF_UP).divide(MONTHLY_PRODUCTIVE_HOURS,
+        12,
+        RoundingMode.HALF_UP);
+      case DAILY -> employee.getPaymentAmount().multiply(MONTHLY_WORK_DAYS).divide(MONTHLY_PRODUCTIVE_HOURS,
+        12,
+        RoundingMode.HALF_UP);
+      case HOURLY -> employee.getPaymentAmount();
+    };
   }
 
-  private RoleResponse map(LaborRole r,
-    UUID t) {
-    List<EmployeeLaborCost> ps = eligible(r,
-      t);
-    BigDecimal cost = null;
-    try {
-      cost = hourlyCost(r,
-        t);
-    } catch (ResponseStatusException ignored) {
+  private RoleResponse map(LaborRole laborRole,
+    UUID tenantId) {
+    List<Employee> eligibleEmployees = eligible(laborRole,
+      tenantId);
+    BigDecimal currentHourlyCost = null;
+    if (laborRole.getCostingMode() == LaborCostingMode.MANUAL) {
+      currentHourlyCost = laborRole.getManualHourlyCost();
+    } else if (!eligibleEmployees.isEmpty()) {
+      currentHourlyCost = averageHourlyCost(eligibleEmployees);
     }
-    return new RoleResponse(r.getId(),
-      r.getCode(),
-      r.getName(),
-      r.getDescription(),
-      r.getCostingMode(),
-      r.getManualHourlyCost(),
-      cost,
-      ps.size(),
-      r.isActive());
+    return new RoleResponse(laborRole.getId(),
+      laborRole.getCode(),
+      laborRole.getName(),
+      laborRole.getDescription(),
+      laborRole.getCostingMode(),
+      laborRole.getManualHourlyCost(),
+      laborRole.getReferencePosition(),
+      currentHourlyCost,
+      eligibleEmployees.size(),
+      laborRole.isActive());
   }
 
-  private ProfileResponse profileMap(EmployeeLaborCost p) {
-    return new ProfileResponse(p.getEmployee().getId(),
-      p.getLaborRole().getId(),
-      p.getProductiveHoursMonth(),
-      p.getWorkDaysMonth(),
-      p.getEmployerChargesPercent(),
-      p.getMonthlyBenefits(),
-      p.getOtherMonthlyCosts(),
-      effective(p));
+  private ProfileResponse profileMap(EmployeeLaborCost profile) {
+    return new ProfileResponse(profile.getEmployee().getId(),
+      profile.getLaborRole().getId(),
+      profile.getProductiveHoursMonth(),
+      profile.getWorkDaysMonth(),
+      profile.getEmployerChargesPercent(),
+      profile.getMonthlyBenefits(),
+      profile.getOtherMonthlyCosts(),
+      effective(profile));
   }
 
   private ProfileListResponse profileListMap(Employee employee,
@@ -247,6 +285,17 @@ public class LaborService {
       effectiveIfCalculable(profile));
   }
 
+  private BigDecimal effective(EmployeeLaborCost profile) {
+    Employee employee = profile.getEmployee();
+    return calculator.hourlyCost(employee.getPaymentMethod(),
+      employee.getPaymentAmount(),
+      profile.getProductiveHoursMonth(),
+      profile.getWorkDaysMonth(),
+      profile.getEmployerChargesPercent(),
+      profile.getMonthlyBenefits(),
+      profile.getOtherMonthlyCosts());
+  }
+
   private BigDecimal effectiveIfCalculable(EmployeeLaborCost profile) {
     if (profile == null || profile.getEmployee().getPaymentMethod() == null || profile.getEmployee().getPaymentAmount() == null)
       return null;
@@ -259,9 +308,9 @@ public class LaborService {
     return search == null || search.isBlank() ? "" : search.trim();
   }
 
-  private ResponseStatusException error(HttpStatus s,
-    String m) {
-    return new ResponseStatusException(s,
-      m);
+  private ResponseStatusException error(HttpStatus status,
+    String message) {
+    return new ResponseStatusException(status,
+      message);
   }
 }

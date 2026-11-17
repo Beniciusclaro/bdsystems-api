@@ -21,13 +21,15 @@ public interface BudgetRepository extends JpaRepository<Budget, UUID> {
 
   @Query("""
     select budget from Budget budget
+    left join budget.client client
+    left join budget.project project
     where budget.company.id = :companyId
       and (:status is null or budget.status = :status)
       and (:search = ''
         or lower(budget.number) like lower(concat('%', :search, '%'))
         or lower(budget.title) like lower(concat('%', :search, '%'))
-        or lower(budget.client.name) like lower(concat('%', :search, '%'))
-        or lower(budget.project.name) like lower(concat('%', :search, '%'))
+        or lower(client.name) like lower(concat('%', :search, '%'))
+        or lower(project.name) like lower(concat('%', :search, '%'))
         or lower(budget.proposedProjectName) like lower(concat('%', :search, '%')))
     """)
   Page<Budget> search(UUID companyId,

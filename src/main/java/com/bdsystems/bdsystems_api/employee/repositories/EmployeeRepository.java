@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.UUID;
 import java.util.Optional;
+import java.util.List;
 
 public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
   boolean existsByCompanyIdAndEmployeeNumber(UUID companyId,
@@ -75,5 +76,43 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
     @Param("search") String search,
     @Param("configured") Boolean configured,
     Pageable pageable
+  );
+
+  @Query("""
+    select employee from Employee employee
+    where employee.company.id = :companyId
+      and employee.enable = false
+      and employee.status = :status
+      and employee.position is not null
+      and trim(employee.position) <> ''
+      and employee.paymentMethod is not null
+      and employee.paymentAmount is not null
+      and lower(trim(employee.position)) = lower(trim(:referencePosition))
+      and not exists (
+        select user.id from User user where user.employee = employee)
+    """)
+  List<Employee> findEligibleForAverage(
+    @Param("companyId") UUID companyId,
+    @Param("status") EmployeeStatus status,
+    @Param("referencePosition") String referencePosition
+  );
+
+  @Query("""
+    select min(trim(employee.position)) from Employee employee
+    where employee.company.id = :companyId
+      and employee.enable = false
+      and employee.status = :status
+      and employee.position is not null
+      and trim(employee.position) <> ''
+      and employee.paymentMethod is not null
+      and employee.paymentAmount is not null
+      and not exists (
+        select user.id from User user where user.employee = employee)
+    group by lower(trim(employee.position))
+    order by lower(trim(employee.position))
+    """)
+  List<String> findEligibleReferencePositions(
+    @Param("companyId") UUID companyId,
+    @Param("status") EmployeeStatus status
   );
 }

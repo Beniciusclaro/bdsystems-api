@@ -44,6 +44,8 @@ public class LaborRole {
   private LaborCostingMode costingMode;
   @Column(name = "manual_hourly_cost", precision = 19, scale = 4)
   private BigDecimal manualHourlyCost;
+  @Column(name = "reference_position", length = 150)
+  private String referencePosition;
   @Column(nullable = false)
   private boolean active = true;
   @Column(name = "created_at", nullable = false)
@@ -51,22 +53,24 @@ public class LaborRole {
   @Column(name = "updated_at")
   private OffsetDateTime updatedAt;
 
-  public LaborRole(Company c) {
-    company = c;
+  public LaborRole(Company company) {
+    this.company = company;
   }
 
-  public void update(String c,
-    String n,
-    String d,
-    LaborCostingMode m,
-    BigDecimal cost,
-    boolean a) {
-    code = c;
-    name = n;
-    description = d;
-    costingMode = m;
-    manualHourlyCost = cost;
-    active = a;
+  public void update(String code,
+    String name,
+    String description,
+    LaborCostingMode costingMode,
+    BigDecimal manualHourlyCost,
+    String referencePosition,
+    boolean active) {
+    this.code = code;
+    this.name = name;
+    this.description = description;
+    this.costingMode = costingMode;
+    this.manualHourlyCost = manualHourlyCost;
+    this.referencePosition = referencePosition;
+    this.active = active;
   }
 
   @PrePersist
